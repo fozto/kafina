@@ -2801,31 +2801,47 @@ function closeAdminLogin() {
 }
 
 
+let loginInProgress = false;
+
 async function loginAdmin(event) {
+
     event.preventDefault();
 
-    if (!account) {
-        showToast("Appwrite belum terhubung.");
+    if (loginInProgress) {
         return;
     }
 
-    const email = document
-        .getElementById("admin-email")
-        .value
-        .trim();
-
-    const password = document
-        .getElementById("admin-password")
-        .value;
-
-    if (!email || !password) {
-        showToast("Email dan password wajib diisi.");
-        return;
-    }
+    loginInProgress = true;
 
     try {
 
-        console.log("Login:", email);
+        if (!account) {
+            showToast("Appwrite belum terhubung.");
+            return;
+        }
+
+        const email =
+            document
+                .getElementById("admin-email")
+                .value
+                .trim();
+
+        const password =
+            document
+                .getElementById("admin-password")
+                .value;
+
+        if (!email || !password) {
+            showToast(
+                "Email dan password wajib diisi."
+            );
+            return;
+        }
+
+        console.log(
+            "LOGIN DIMULAI:",
+            email
+        );
 
         const session =
             await account.createEmailPasswordSession(
@@ -2834,7 +2850,7 @@ async function loginAdmin(event) {
             );
 
         console.log(
-            "Session berhasil:",
+            "SESSION BERHASIL:",
             session
         );
 
@@ -2842,7 +2858,7 @@ async function loginAdmin(event) {
             await account.get();
 
         console.log(
-            "User berhasil login:",
+            "USER BERHASIL:",
             currentUser
         );
 
@@ -2852,17 +2868,18 @@ async function loginAdmin(event) {
 
         await loadClubs();
 
-        showToast("Login berhasil.");
-
-        // Bersihkan password
         document.getElementById(
             "admin-password"
         ).value = "";
 
+        showToast(
+            "Login berhasil."
+        );
+
     } catch (error) {
 
         console.error(
-            "APPWRITE LOGIN ERROR:",
+            "LOGIN ERROR:",
             error
         );
 
@@ -2877,6 +2894,10 @@ async function loginAdmin(event) {
                 "Terjadi kesalahan."
             )
         );
+
+    } finally {
+
+        loginInProgress = false;
     }
 }
 
