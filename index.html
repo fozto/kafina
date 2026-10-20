@@ -3222,22 +3222,30 @@ async function saveClub(event) {
    LOAD CLUBS
 ========================================================= */
 async function loadClubs() {
+
     if (!databases) return;
 
     try {
+
         const result = await databases.listRows({
             databaseId: APPWRITE_CONFIG.databaseId,
             tableId: APPWRITE_CONFIG.clubsTableId
         });
 
-        renderClubs(result.rows);
-        updateStatsFromDatabase(result.rows);
+        clubs = result.rows;
+
+        renderClubs(clubs);
+
+        updateStatsFromDatabase(clubs);
 
     } catch (error) {
-        console.error("Gagal mengambil klub:", error);
+
+        console.error(
+            "Gagal mengambil klub:",
+            error
+        );
     }
-}
-/* =========================================================
+}/* =========================================================
    RENDER CLUBS
 ========================================================= */
 function renderClubs(clubs) {
@@ -3250,8 +3258,14 @@ function renderClubs(clubs) {
     if (!clubs.length) {
 
         container.innerHTML = `
-            <div class="empty" style="grid-column:1/-1">
-                <div class="empty-icon">⚽</div>
+            <div
+                class="empty"
+                style="grid-column:1/-1"
+            >
+                <div class="empty-icon">
+                    ⚽
+                </div>
+
                 Belum ada klub.
             </div>
         `;
@@ -3261,12 +3275,14 @@ function renderClubs(clubs) {
 
     container.innerHTML = clubs.map(club => {
 
-        const logo = getLogoUrl(club.logoFileId);
+        const logo =
+            getLogoUrl(club.logoFileId);
 
         return `
             <div class="club-card">
 
                 <div class="club-logo">
+
                     ${
                         logo
                             ? `
@@ -3281,6 +3297,7 @@ function renderClubs(clubs) {
                                 </div>
                               `
                     }
+
                 </div>
 
                 <h3>
@@ -3322,7 +3339,6 @@ function renderClubs(clubs) {
 
     }).join("");
 }
-
 /* =========================================================
    ESCAPE HTML
 ========================================================= */
