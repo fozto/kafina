@@ -2800,43 +2800,52 @@ function closeAdminLogin() {
    LOGIN
 ========================================================= */
 async function loginAdmin(event) {
-
     event.preventDefault();
 
     if (!account) {
-        showToast("Appwrite belum dikonfigurasi.");
+        showToast("Appwrite belum terhubung.");
         return;
     }
 
-    const email =
-        document.getElementById("admin-email").value.trim();
+    const email = document
+        .getElementById("admin-email")
+        .value
+        .trim();
 
-    const password =
-        document.getElementById("admin-password").value;
+    const password = document
+        .getElementById("admin-password")
+        .value;
+
+    if (!email || !password) {
+        showToast("Email dan password wajib diisi.");
+        return;
+    }
 
     try {
+        console.log("Mencoba login:", email);
 
-        await account.createEmailPasswordSession(
-            email,
-            password
-        );
+        const session = await account.createEmailPasswordSession({
+            email: email,
+            password: password
+        });
 
-        currentUser =
-            await account.get();
+        console.log("Session berhasil:", session);
+
+        currentUser = await account.get();
+
+        console.log("User berhasil login:", currentUser);
 
         closeAdminLogin();
-
         updateAdminUI();
 
         showToast("Login berhasil.");
 
     } catch (error) {
-
-        console.error(error);
+        console.error("APPWRITE LOGIN ERROR:", error);
 
         showToast(
             "Login gagal: " +
-            error.message
+            (error.message || "Terjadi kesalahan.")
         );
     }
 }
