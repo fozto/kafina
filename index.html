@@ -3131,125 +3131,108 @@ async function uploadClubLogo(file) {
 /* =========================================================
    CREATE CLUB
 ========================================================= */
-
 async function saveClub(event) {
-
     event.preventDefault();
 
-
-    if (!currentUser) {
-
-        showToast(
-            "Anda harus login sebagai admin."
-        );
-
+    if (!account || !currentUser) {
+        showToast("Silakan login sebagai admin.");
         return;
     }
 
+    const name = document
+        .getElementById("club-name")
+        .value
+        .trim();
 
-    if (!databases) {
+    const group = document
+        .getElementById("club-group")
+        .value;
 
-        showToast(
-            "Database Appwrite belum terhubung."
-        );
-
-        return;
-    }
-
-
-    const name =
-        document
-            .getElementById(
-                "club-name"
-            )
-            .value
-            .trim();
-
-
-    const group =
-        document
-            .getElementById(
-                "club-group"
-            )
-            .value;
-
+    const fileInput =
+        document.getElementById("club-logo-file");
 
     const file =
-        document
-            .getElementById(
-                "club-logo-file"
-            )
-            .files[0];
-
+        fileInput?.files?.[0] || null;
 
     if (!name) {
-
-        showToast(
-            "Nama klub wajib diisi."
-        );
-
+        showToast("Nama klub wajib diisi.");
         return;
     }
 
-
     try {
+        let logoFileId = editingOldLogoId;
 
-        let logoFileId = "";
-
-
-        /*
-            1. Upload logo terlebih dahulu
-        */
-
+        // Jika admin memilih logo baru
         if (file) {
-
-            showToast(
-                "Mengupload logo..."
-            );
-
-
             const uploadedFile =
-                await uploadClubLogo(
-                    file
-                );
+                await uploadClubLogo(file);
 
-
-            logoFileId =
-                uploadedFile.$id;
+            logoFileId = uploadedFile.$id;
         }
 
+        // EDIT
+        if (editingClubId) {
 
-        /*
-            2. Simpan data klub
-        */
+            await databases.updateRow({
+                databaseId: APPWRITE_CONFIG.databaseId,
+                tableId: APPWRITE_CONFIG.clubsTableId,
+                rowId: editingClubId,
 
-        await databases.createRow(
-            APPWRITE_CONFIG.databaseId,
-            APPWRITE_CONFIG.clubsTableId,
-            Appwrite.ID.unique(),
-            {
+                data: {
+                    name,
+                    group,
+                    logoFileId: logoFileId || ""
+                }
+            });
 
-                name: name,
-
-                group: group,
-
-                logoFileId:
-                    logoFileId
-
+            // Hapus logo lama jika diganti
+            if (
+                file &&
+                editingOldLogoId &&
+                editingOldLogoId !== logoFileId
+            ) {
+                try {
+                    await storage.deleteFile({
+                        bucketId:
+                            APPWRITE_CONFIG.storageBucketId,
+                        fileId: editingOldLogoId
+                    });
+                } catch (error) {
+                    console.warn(
+                        "Logo lama gagal dihapus:",
+                        error
+                    );
+                }
             }
-        );
 
+            showToast("Klub berhasil diperbarui.");
+
+        } else {
+
+            // TAMBAH KLUB
+            await databases.createRow({
+                databaseId: APPWRITE_CONFIG.databaseId,
+                tableId: APPWRITE_CONFIG.clubsTableId,
+                rowId: Appwrite.ID.unique(),
+
+                data: {
+                    name,
+                    group,
+                    logoFileId: logoFileId || ""
+                }
+            });
+
+            showToast("Klub berhasil ditambahkan.");
+        }
 
         closeClubModal();
 
+        editingClubId = null;
+        editingOldLogoId = null;
 
-        showToast(
-            "Klub berhasil disimpan."
-        );
-
+        document.getElementById("club-form").reset();
 
         await loadClubs();
-
 
     } catch (error) {
 
@@ -3258,14 +3241,12 @@ async function saveClub(event) {
             error
         );
 
-
         showToast(
             "Gagal menyimpan klub: " +
-            error.message
+            (error.message || "Unknown error")
         );
     }
 }
-
 
 /* =========================================================
    GET LOGO URL
@@ -3321,11 +3302,10 @@ async function loadClubs() {
             dari table clubs.
         */
 
-        const result =
-            await databases.listRows(
-                APPWRITE_CONFIG.databaseId,
-                APPWRITE_CONFIG.clubsTableId
-            );
+        const result = await databases.listRows({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.clubsTableId
+});
 
 
         renderClubs(
@@ -3713,6 +3693,162 @@ document.addEventListener(
 
     }
 );
+
+let editingClubId = null;
+let editingOldLogoId = null;
+
+function editClub(clubId) {
+    const club = clubs.find(c => c.$id === clubId);
+
+    if (!club) {
+        showToast("Klub tidak ditemukan.");
+        return;
+    }
+
+    editingClubId = club.$id;
+    editingOldLogoId = club.logoFileId || null;
+
+    document.getElementById("club-name").value = club.name || "";
+    document.getElementById("club-group").value = club.group || "A";
+
+    const fileInput = document.getElementById("club-logo-file");
+
+    if (fileInput) {
+        fileInput.value = "";
+    }
+
+    const title = document.getElementById("club-modal-title");
+
+    if (title) {
+        title.textContent = "Edit Klub";
+    }
+
+    openClubModal();
+}
+
+async function deleteClub(clubId) {
+    if (!account || !currentUser) {
+        showToast("Silakan login sebagai admin.");
+        return;
+    }
+
+    const club = clubs.find(c => c.$id === clubId);
+
+    if (!club) {
+        showToast("Klub tidak ditemukan.");
+        return;
+    }
+
+    const confirmed = confirm(
+        `Hapus klub "${club.name}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+
+        await databases.deleteRow({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId: APPWRITE_CONFIG.clubsTableId,
+            rowId: clubId
+        });
+
+        if (club.logoFileId) {
+            try {
+                await storage.deleteFile({
+                    bucketId:
+                        APPWRITE_CONFIG.storageBucketId,
+                    fileId: club.logoFileId
+                });
+            } catch (error) {
+                console.warn(
+                    "Logo klub gagal dihapus:",
+                    error
+                );
+            }
+        }
+
+        showToast("Klub berhasil dihapus.");
+
+        await loadClubs();
+
+    } catch (error) {
+
+        console.error(
+            "Gagal menghapus klub:",
+            error
+        );
+
+        showToast(
+            "Gagal menghapus klub: " +
+            (error.message || "Unknown error")
+        );
+    }
+}
+function renderClubs() {
+    const container = document.getElementById("clubs-container");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    clubs.forEach(club => {
+
+        const logoUrl = club.logoFileId
+            ? `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.storageBucketId}/files/${club.logoFileId}/view?project=${APPWRITE_CONFIG.projectId}`
+            : "";
+
+        const card = document.createElement("div");
+
+        card.className = "club-card";
+
+        card.innerHTML = `
+            <div class="club-logo">
+                ${
+                    logoUrl
+                        ? `<img src="${logoUrl}" alt="${club.name}">`
+                        : `<div class="club-logo-placeholder">LOGO</div>`
+                }
+            </div>
+
+            <div class="club-info">
+
+                <div class="club-group">
+                    GRUP ${club.group}
+                </div>
+
+                <h3>${club.name}</h3>
+
+                ${
+                    currentUser
+                        ? `
+                            <div class="club-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-edit"
+                                    onclick="editClub('${club.$id}')">
+                                    Edit
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn-delete"
+                                    onclick="deleteClub('${club.$id}')">
+                                    Hapus
+                                </button>
+
+                            </div>
+                          `
+                        : ""
+                }
+
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+}
 
 </script>
 
