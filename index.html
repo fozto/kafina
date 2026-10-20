@@ -2409,8 +2409,8 @@ LOGIN
 
 <div class="modal-header">
 
-<h2>
-Tambah Klub
+<h2 id="club-modal-title">
+    Tambah Klub
 </h2>
 
 <button
@@ -3126,11 +3126,6 @@ async function uploadClubLogo(file) {
 
     return uploadedFile;
 }
-
-
-/* =========================================================
-   CREATE CLUB
-========================================================= */
 async function saveClub(event) {
     event.preventDefault();
 
@@ -3139,20 +3134,10 @@ async function saveClub(event) {
         return;
     }
 
-    const name = document
-        .getElementById("club-name")
-        .value
-        .trim();
-
-    const group = document
-        .getElementById("club-group")
-        .value;
-
-    const fileInput =
-        document.getElementById("club-logo-file");
-
-    const file =
-        fileInput?.files?.[0] || null;
+    const name = document.getElementById("club-name").value.trim();
+    const group = document.getElementById("club-group").value;
+    const fileInput = document.getElementById("club-logo-file");
+    const file = fileInput?.files?.[0] || null;
 
     if (!name) {
         showToast("Nama klub wajib diisi.");
@@ -3160,32 +3145,28 @@ async function saveClub(event) {
     }
 
     try {
-        let logoFileId = editingOldLogoId;
+        let logoFileId = editingOldLogoId || "";
 
-        // Jika admin memilih logo baru
         if (file) {
-            const uploadedFile =
-                await uploadClubLogo(file);
+            showToast("Mengupload logo...");
 
+            const uploadedFile = await uploadClubLogo(file);
             logoFileId = uploadedFile.$id;
         }
 
-        // EDIT
         if (editingClubId) {
 
             await databases.updateRow({
                 databaseId: APPWRITE_CONFIG.databaseId,
                 tableId: APPWRITE_CONFIG.clubsTableId,
                 rowId: editingClubId,
-
                 data: {
-                    name,
-                    group,
-                    logoFileId: logoFileId || ""
+                    name: name,
+                    group: group,
+                    logoFileId: logoFileId
                 }
             });
 
-            // Hapus logo lama jika diganti
             if (
                 file &&
                 editingOldLogoId &&
@@ -3193,15 +3174,11 @@ async function saveClub(event) {
             ) {
                 try {
                     await storage.deleteFile({
-                        bucketId:
-                            APPWRITE_CONFIG.storageBucketId,
+                        bucketId: APPWRITE_CONFIG.storageBucketId,
                         fileId: editingOldLogoId
                     });
                 } catch (error) {
-                    console.warn(
-                        "Logo lama gagal dihapus:",
-                        error
-                    );
+                    console.warn("Logo lama gagal dihapus:", error);
                 }
             }
 
@@ -3209,37 +3186,31 @@ async function saveClub(event) {
 
         } else {
 
-            // TAMBAH KLUB
             await databases.createRow({
                 databaseId: APPWRITE_CONFIG.databaseId,
                 tableId: APPWRITE_CONFIG.clubsTableId,
                 rowId: Appwrite.ID.unique(),
-
                 data: {
-                    name,
-                    group,
-                    logoFileId: logoFileId || ""
+                    name: name,
+                    group: group,
+                    logoFileId: logoFileId
                 }
             });
 
             showToast("Klub berhasil ditambahkan.");
         }
 
-        closeClubModal();
-
         editingClubId = null;
         editingOldLogoId = null;
 
-        document.getElementById("club-form").reset();
+        closeClubModal();
+
+        document.getElementById("club-form")?.reset();
 
         await loadClubs();
 
     } catch (error) {
-
-        console.error(
-            "Gagal menyimpan klub:",
-            error
-        );
+        console.error("Gagal menyimpan klub:", error);
 
         showToast(
             "Gagal menyimpan klub: " +
@@ -3247,172 +3218,110 @@ async function saveClub(event) {
         );
     }
 }
-
-/* =========================================================
-   GET LOGO URL
-========================================================= */
-
-function getLogoUrl(fileId) {
-
-    if (
-        !fileId ||
-        !APPWRITE_CONFIG.projectId
-    ) {
-
-        return "";
-    }
-
-
-    /*
-        URL preview file Appwrite Storage.
-
-        Browser akan mengambil gambar
-        langsung dari Appwrite.
-    */
-
-    return (
-        APPWRITE_CONFIG.endpoint +
-        "/storage/buckets/" +
-        APPWRITE_CONFIG.storageBucketId +
-        "/files/" +
-        fileId +
-        "/view?project=" +
-        APPWRITE_CONFIG.projectId
-    );
-}
-
-
 /* =========================================================
    LOAD CLUBS
 ========================================================= */
-
 async function loadClubs() {
-
-    if (!databases) {
-        return;
-    }
-
+    if (!databases) return;
 
     try {
-
-        /*
-            Appwrite TablesDB.
-
-            Semua klub akan diambil
-            dari table clubs.
-        */
-
         const result = await databases.listRows({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.clubsTableId
-});
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId: APPWRITE_CONFIG.clubsTableId
+        });
 
-
-        renderClubs(
-            result.rows
-        );
-
-
-        updateStatsFromDatabase(
-            result.rows
-        );
-
+        renderClubs(result.rows);
+        updateStatsFromDatabase(result.rows);
 
     } catch (error) {
-
-        console.error(
-            "Gagal mengambil klub:",
-            error
-        );
+        console.error("Gagal mengambil klub:", error);
     }
 }
-
-
 /* =========================================================
    RENDER CLUBS
 ========================================================= */
-
 function renderClubs(clubs) {
 
     const container =
-        document.getElementById(
-            "clubs-container"
-        );
+        document.getElementById("clubs-container");
 
+    if (!container) return;
 
     if (!clubs.length) {
 
         container.innerHTML = `
-
-            <div
-                class="empty"
-                style="grid-column:1/-1"
-            >
-
-                <div class="empty-icon">
-                    ⚽
-                </div>
-
+            <div class="empty" style="grid-column:1/-1">
+                <div class="empty-icon">⚽</div>
                 Belum ada klub.
-
             </div>
         `;
 
         return;
     }
 
+    container.innerHTML = clubs.map(club => {
 
-    container.innerHTML =
-        clubs.map(club => {
+        const logo = getLogoUrl(club.logoFileId);
 
-            const logo =
-                getLogoUrl(
-                    club.logoFileId
-                );
+        return `
+            <div class="club-card">
 
-
-            return `
-
-                <div class="club-card">
-
-                    <div class="club-logo">
-
-                        ${
-                            logo
-
-                            ?
-
-                            `
-                            <img
-                                src="${logo}"
-                                alt="${escapeHtml(club.name)}"
-                            >
-                            `
-
-                            :
-
-                            `⚽`
-                        }
-
-                    </div>
-
-
-                    <h3>
-                        ${escapeHtml(club.name)}
-                    </h3>
-
-
-                    <p>
-                        Grup ${escapeHtml(club.group)}
-                    </p>
-
+                <div class="club-logo">
+                    ${
+                        logo
+                            ? `
+                                <img
+                                    src="${logo}"
+                                    alt="${escapeHtml(club.name)}"
+                                >
+                              `
+                            : `
+                                <div class="club-logo-placeholder">
+                                    LOGO
+                                </div>
+                              `
+                    }
                 </div>
 
-            `;
+                <h3>
+                    ${escapeHtml(club.name)}
+                </h3>
 
-        }).join("");
+                <p>
+                    Grup ${escapeHtml(club.group)}
+                </p>
+
+                ${
+                    currentUser
+                        ? `
+                            <div class="club-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-edit"
+                                    onclick="editClub('${club.$id}')"
+                                >
+                                    Edit
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn-delete"
+                                    onclick="deleteClub('${club.$id}')"
+                                >
+                                    Hapus
+                                </button>
+
+                            </div>
+                          `
+                        : ""
+                }
+
+            </div>
+        `;
+
+    }).join("");
 }
-
 
 /* =========================================================
    ESCAPE HTML
