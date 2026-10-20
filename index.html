@@ -2550,7 +2550,7 @@ SIMPAN KLUB
      APPWRITE SDK
 ========================================================= -->
 
-<script src="https://cdn.jsdelivr.net/npm/appwrite@29.0.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
 
 <script>
 
@@ -2614,77 +2614,33 @@ let storage = null;
 
 let currentUser = null;
 
-
-/* =========================================================
-   INITIALIZE APPWRITE
-========================================================= */
-
 function initializeAppwrite() {
-
-    if (
-        APPWRITE_CONFIG.projectId ===
-        "MASUKKAN_PROJECT_ID"
-    ) {
-
-        console.warn(
-            "Appwrite belum dikonfigurasi."
-        );
-
-        return false;
-    }
-
-
     try {
+        if (typeof Appwrite === "undefined") {
+            console.error("SDK Appwrite tidak berhasil dimuat.");
+            showToast("SDK Appwrite gagal dimuat.");
+            return false;
+        }
 
-        client =
-            new Appwrite.Client();
-
+        client = new Appwrite.Client();
 
         client
-            .setEndpoint(
-                APPWRITE_CONFIG.endpoint
-            )
-            .setProject(
-                APPWRITE_CONFIG.projectId
-            );
+            .setEndpoint(APPWRITE_CONFIG.endpoint)
+            .setProject(APPWRITE_CONFIG.projectId);
 
+        account = new Appwrite.Account(client);
+        databases = new Appwrite.TablesDB(client);
+        storage = new Appwrite.Storage(client);
 
-        account =
-            new Appwrite.Account(
-                client
-            );
-
-
-        databases =
-            new Appwrite.TablesDB(
-                client
-            );
-
-
-        storage =
-            new Appwrite.Storage(
-                client
-            );
-
-
-        console.log(
-            "Appwrite berhasil terhubung."
-        );
-
-
+        console.log("Appwrite berhasil diinisialisasi.");
         return true;
 
     } catch (error) {
-
-        console.error(
-            "Appwrite error:",
-            error
-        );
-
+        console.error("Inisialisasi Appwrite gagal:", error);
+        showToast("Gagal menghubungkan Appwrite.");
         return false;
     }
 }
-
 
 /* =========================================================
    NAVIGATION
@@ -2795,93 +2751,47 @@ function closeAdminLogin() {
 }
 
 
-/* =========================================================
-   LOGIN
-========================================================= */
 async function loginAdmin(event) {
     event.preventDefault();
 
     if (!account) {
-        showToast("Appwrite belum terhubung.");
+        showToast("Appwrite belum terinisialisasi.");
+        console.error("Objek account belum tersedia.");
         return;
     }
 
     const email = document
         .getElementById("admin-email")
-        .value
-        .trim();
+        .value.trim();
 
     const password = document
         .getElementById("admin-password")
         .value;
 
-    if (!email || !password) {
-        showToast("Email dan password wajib diisi.");
-        return;
-    }
-
     try {
-        console.log("Mencoba login:", email);
+        showToast("Sedang login...");
 
-        const session = await account.createEmailPasswordSession({
-            email: email,
-            password: password
+        await account.createEmailPasswordSession({
+            email,
+            password
         });
 
-        console.log("Session berhasil:", session);
-
         currentUser = await account.get();
-
-        console.log("User berhasil login:", currentUser);
 
         closeAdminLogin();
         updateAdminUI();
 
         showToast("Login berhasil.");
 
+        await loadClubs();
+
     } catch (error) {
-        console.error("APPWRITE LOGIN ERROR:", error);
-
+        console.error("Login error:", error);
         showToast(
-            "Login gagal: " +
-            (error.message || "Terjadi kesalahan.")
+            `Login gagal (${error.code || "error"}): ${error.message}`
         );
     }
 }
-/* =========================================================
-   CHECK SESSION
-========================================================= */
-
-async function checkAdminSession() {
-
-    if (!account) {
-        return;
-    }
-
-
-    try {
-
-        currentUser =
-            await account.get();
-
-
-        updateAdminUI();
-
-
-        console.log(
-            "Admin aktif:",
-            currentUser
-        );
-
-
-    } catch {
-
-        currentUser = null;
-
-        updateAdminUI();
-    }
-}
-
 
 /* =========================================================
    ADMIN UI
