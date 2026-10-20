@@ -1,0 +1,3741 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+
+<title>KAFINA CUP</title>
+<style>
+/* =========================================================
+   KAFINA CUP
+   DARK GREEN / PREMIUM FOOTBALL
+========================================================= */
+
+:root {
+    --bg: #020806;
+    --bg-2: #04100a;
+    --card: #07150e;
+    --card-2: #0a1c12;
+
+    --green: #166534;
+    --green-dark: #052e16;
+    --green-light: #22c55e;
+    --green-soft: #4ade80;
+
+    --text: #f1f5f3;
+    --text-2: #cbd5d1;
+    --muted: #82968b;
+
+    --border: #153b28;
+    --border-light: #1d4d32;
+
+    --red: #ef4444;
+    --yellow: #f59e0b;
+
+    --radius: 16px;
+}
+
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(22, 101, 52, .12),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at bottom left,
+            rgba(5, 46, 22, .15),
+            transparent 35%
+        ),
+        var(--bg);
+
+    color: var(--text);
+    min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+header {
+    background:
+        linear-gradient(
+            135deg,
+            #010604,
+            #03150b,
+            #052e16
+        );
+
+    border-bottom: 1px solid var(--border);
+
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    box-shadow:
+        0 5px 30px rgba(0, 0, 0, .45);
+}
+
+.header-inner {
+    max-width: 1200px;
+    margin: auto;
+
+    padding: 15px 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-logo {
+    width: 48px;
+    height: 48px;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0b3b22,
+            #052e16
+        );
+
+    border: 1px solid #1d5a38;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 24px;
+
+    box-shadow:
+        inset 0 0 20px rgba(34,197,94,.08);
+}
+
+.brand h1 {
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.brand span {
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    margin-top: 2px;
+
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.admin-button {
+    border: 1px solid var(--border-light);
+
+    background: rgba(22,101,52,.15);
+
+    color: var(--green-soft);
+
+    padding: 9px 15px;
+
+    border-radius: 10px;
+
+    font-weight: 700;
+
+    transition: .2s;
+}
+
+.admin-button:hover {
+    background: rgba(34,197,94,.12);
+    border-color: var(--green-light);
+}
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+nav {
+    background: rgba(2, 8, 6, .96);
+
+    border-bottom: 1px solid var(--border);
+
+    position: sticky;
+    top: 79px;
+
+    z-index: 90;
+
+    backdrop-filter: blur(12px);
+}
+
+.nav-inner {
+    max-width: 1200px;
+    margin: auto;
+
+    display: flex;
+
+    overflow-x: auto;
+
+    scrollbar-width: none;
+}
+
+.nav-inner::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-button {
+    border: none;
+
+    background: transparent;
+
+    color: var(--muted);
+
+    padding: 15px 20px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    border-bottom: 3px solid transparent;
+
+    transition: .2s;
+}
+
+.nav-button:hover {
+    color: var(--green-soft);
+}
+
+.nav-button.active {
+    color: var(--green-soft);
+
+    border-bottom-color:
+        var(--green-light);
+}
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+main {
+    max-width: 1200px;
+
+    margin: auto;
+
+    padding: 25px 20px 70px;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero {
+    background:
+        radial-gradient(
+            circle at 90% 20%,
+            rgba(34,197,94,.12),
+            transparent 25%
+        ),
+        linear-gradient(
+            135deg,
+            #020906,
+            #052e16
+        );
+
+    border: 1px solid var(--border-light);
+
+    color: white;
+
+    border-radius: 22px;
+
+    padding: 38px;
+
+    margin-bottom: 25px;
+
+    position: relative;
+
+    overflow: hidden;
+}
+
+.hero::after {
+    content: "⚽";
+
+    position: absolute;
+
+    right: 35px;
+    bottom: -35px;
+
+    font-size: 150px;
+
+    opacity: .04;
+}
+
+.hero h2 {
+    font-size: clamp(32px, 6vw, 52px);
+
+    font-weight: 950;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 8px;
+}
+
+.hero p {
+    color: #b9c9c0;
+
+    max-width: 600px;
+
+    line-height: 1.7;
+}
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.section-title {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 16px;
+}
+
+.section-title h2 {
+    font-size: 21px;
+}
+
+.section-title p {
+    color: var(--muted);
+
+    font-size: 13px;
+
+    margin-top: 3px;
+}
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(10,28,18,.96),
+            rgba(4,15,9,.98)
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 20px;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.2);
+}
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+.stat {
+    background:
+        linear-gradient(
+            145deg,
+            #091b11,
+            #041009
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 18px;
+}
+
+.stat-label {
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+.stat-value {
+    color: var(--green-soft);
+
+    font-size: 28px;
+
+    font-weight: 900;
+
+    margin-top: 6px;
+}
+
+/* =========================================================
+   MATCHES
+========================================================= */
+
+.matches {
+    display: grid;
+    gap: 12px;
+}
+
+.match {
+    background:
+        linear-gradient(
+            145deg,
+            #081910,
+            #041009
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: 14px;
+
+    padding: 15px;
+
+    display: grid;
+
+    grid-template-columns:
+        100px 1fr 120px;
+
+    align-items: center;
+
+    gap: 15px;
+
+    transition: .2s;
+}
+
+.match:hover {
+    border-color:
+        rgba(34,197,94,.35);
+
+    transform: translateY(-1px);
+}
+
+.match-info {
+    text-align: center;
+
+    font-size: 11px;
+
+    color: var(--muted);
+}
+
+.match-info strong {
+    display: block;
+
+    color: var(--text-2);
+
+    font-size: 12px;
+
+    margin-bottom: 3px;
+}
+
+.teams {
+    display: grid;
+
+    grid-template-columns:
+        1fr 70px 1fr;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+.team {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.team:last-child {
+    justify-content: flex-end;
+
+    text-align: right;
+}
+
+.team-logo {
+    width: 43px;
+    height: 43px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #020806;
+
+    border: 1px solid var(--border-light);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+.team-logo img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+}
+
+.team-name {
+    font-weight: 800;
+
+    font-size: 14px;
+}
+
+.score {
+    text-align: center;
+
+    font-size: 24px;
+
+    font-weight: 900;
+
+    color: var(--green-soft);
+}
+
+.score small {
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 9px;
+
+    font-weight: 600;
+}
+
+.venue {
+    text-align: right;
+
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 650px;
+}
+
+th,
+td {
+    padding: 13px 10px;
+
+    border-bottom:
+        1px solid var(--border);
+
+    text-align: center;
+}
+
+th {
+    background: #091a11;
+
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+td {
+    font-size: 13px;
+}
+
+td:first-child,
+th:first-child {
+    text-align: left;
+}
+
+.club-cell {
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    font-weight: 800;
+}
+
+.mini-logo {
+    width: 32px;
+    height: 32px;
+
+    border-radius: 50%;
+
+    background: #020806;
+
+    border: 1px solid var(--border-light);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+.mini-logo img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+}
+
+.qualified {
+    background:
+        rgba(22,101,52,.12);
+}
+
+/* =========================================================
+   GROUP
+========================================================= */
+
+.groups {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 20px;
+}
+
+/* =========================================================
+   KNOCKOUT
+========================================================= */
+
+.bracket {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 20px;
+
+    align-items: center;
+}
+
+.round h3 {
+    text-align: center;
+
+    color: var(--green-soft);
+
+    margin-bottom: 15px;
+
+    font-size: 14px;
+}
+
+.knockout-match {
+    background:
+        linear-gradient(
+            145deg,
+            #091b11,
+            #041009
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    margin-bottom: 20px;
+}
+
+.knockout-title {
+    padding: 9px 12px;
+
+    background: #091a11;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    color: var(--muted);
+}
+
+.knockout-team {
+    padding: 12px;
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    border-top:
+        1px solid var(--border);
+}
+
+/* =========================================================
+   CLUBS
+========================================================= */
+
+.clubs {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 15px;
+}
+
+.club-card {
+    background:
+        linear-gradient(
+            145deg,
+            #091b11,
+            #041009
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: 16px;
+
+    padding: 22px;
+
+    text-align: center;
+
+    transition: .2s;
+}
+
+.club-card:hover {
+    transform: translateY(-3px);
+
+    border-color:
+        rgba(34,197,94,.4);
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.25);
+}
+
+.club-card .club-logo {
+    width: 78px;
+    height: 78px;
+
+    margin: 0 auto 13px;
+
+    border-radius: 50%;
+
+    background: #020806;
+
+    border: 1px solid var(--border-light);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 32px;
+
+    overflow: hidden;
+}
+
+.club-card .club-logo img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+}
+
+.club-card h3 {
+    font-size: 15px;
+}
+
+.club-card p {
+    color: var(--muted);
+
+    font-size: 12px;
+
+    margin-top: 4px;
+}
+
+/* =========================================================
+   RULES
+========================================================= */
+
+.rules {
+    line-height: 1.8;
+
+    color: var(--text-2);
+}
+
+.rules h3 {
+    color: var(--green-soft);
+
+    margin: 20px 0 5px;
+}
+
+.rules h3:first-child {
+    margin-top: 0;
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal {
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(0,0,0,.75);
+
+    display: none;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+
+    z-index: 1000;
+
+    backdrop-filter: blur(5px);
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-box {
+    width: 100%;
+
+    max-width: 480px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #091b11,
+            #030b07
+        );
+
+    border: 1px solid var(--border-light);
+
+    border-radius: 18px;
+
+    padding: 25px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    box-shadow:
+        0 20px 70px rgba(0,0,0,.55);
+}
+
+.modal-header {
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    color: var(--green-soft);
+}
+
+.close {
+    border: none;
+
+    background: transparent;
+
+    color: var(--muted);
+
+    font-size: 27px;
+}
+
+.close:hover {
+    color: white;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+
+    color: var(--text-2);
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+
+    background: #020806;
+
+    color: white;
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    padding: 11px 12px;
+
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color:
+        var(--green-light);
+
+    box-shadow:
+        0 0 0 3px rgba(34,197,94,.08);
+}
+
+.form-group input::placeholder {
+    color: #52675b;
+}
+
+/* =========================================================
+   BUTTON
+========================================================= */
+
+.button {
+    border: none;
+
+    padding: 11px 16px;
+
+    border-radius: 10px;
+
+    font-weight: 800;
+}
+
+.button-primary {
+    background:
+        linear-gradient(
+            135deg,
+            #166534,
+            #15803d
+        );
+
+    color: white;
+}
+
+.button-primary:hover {
+    background:
+        linear-gradient(
+            135deg,
+            #15803d,
+            #16a34a
+        );
+}
+
+.button-secondary {
+    background: #10231a;
+
+    color: var(--text-2);
+
+    border: 1px solid var(--border);
+}
+
+.button-danger {
+    background: rgba(239,68,68,.12);
+
+    color: #f87171;
+
+    border: 1px solid rgba(239,68,68,.2);
+}
+
+/* =========================================================
+   UPLOAD LOGO
+========================================================= */
+
+.logo-upload {
+    border: 1px dashed
+        var(--border-light);
+
+    background:
+        rgba(22,101,52,.06);
+
+    border-radius: 14px;
+
+    padding: 20px;
+
+    text-align: center;
+}
+
+.logo-preview {
+    width: 100px;
+    height: 100px;
+
+    border-radius: 50%;
+
+    margin: 0 auto 15px;
+
+    background: #020806;
+
+    border: 1px solid var(--border-light);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    overflow: hidden;
+
+    font-size: 40px;
+}
+
+.logo-preview img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+}
+
+.file-input {
+    display: none;
+}
+
+.upload-button {
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 10px 15px;
+
+    border-radius: 10px;
+
+    background:
+        #10281b;
+
+    border: 1px solid
+        var(--border-light);
+
+    color: var(--green-soft);
+
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.upload-button:hover {
+    background:
+        #143521;
+}
+
+.upload-info {
+    color: var(--muted);
+
+    font-size: 11px;
+
+    margin-top: 9px;
+}
+
+/* =========================================================
+   ADMIN PANEL
+========================================================= */
+
+.admin-panel {
+    margin-top: 25px;
+}
+
+.admin-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 15px;
+}
+
+.admin-card {
+    background:
+        linear-gradient(
+            145deg,
+            #091b11,
+            #041009
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: 15px;
+
+    padding: 20px;
+}
+
+.admin-card h3 {
+    color: var(--green-soft);
+
+    margin-bottom: 6px;
+}
+
+.admin-card p {
+    color: var(--muted);
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.loading {
+    text-align: center;
+
+    padding: 40px;
+
+    color: var(--muted);
+}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty {
+    padding: 35px 20px;
+
+    text-align: center;
+
+    color: var(--muted);
+}
+
+.empty-icon {
+    font-size: 40px;
+
+    opacity: .4;
+
+    margin-bottom: 8px;
+}
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+.toast {
+    position: fixed;
+
+    right: 20px;
+    bottom: 20px;
+
+    background:
+        #07150e;
+
+    border: 1px solid
+        var(--border-light);
+
+    color: white;
+
+    padding: 13px 18px;
+
+    border-radius: 10px;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.4);
+
+    transform:
+        translateY(100px);
+
+    opacity: 0;
+
+    transition: .3s;
+
+    z-index: 2000;
+}
+
+.toast.show {
+    transform:
+        translateY(0);
+
+    opacity: 1;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .stats {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .clubs {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .groups {
+        grid-template-columns:
+            1fr;
+    }
+
+    .bracket {
+        grid-template-columns:
+            1fr;
+    }
+
+    .admin-grid {
+        grid-template-columns:
+            1fr;
+    }
+}
+
+@media (max-width: 650px) {
+
+    .header-inner {
+        padding: 12px 15px;
+    }
+
+    .brand h1 {
+        font-size: 18px;
+    }
+
+    .brand-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    nav {
+        top: 65px;
+    }
+
+    main {
+        padding:
+            18px 12px 50px;
+    }
+
+    .hero {
+        padding: 27px 20px;
+    }
+
+    .hero h2 {
+        font-size: 32px;
+    }
+
+    .stats {
+        gap: 10px;
+    }
+
+    .stat {
+        padding: 14px;
+    }
+
+    .stat-value {
+        font-size: 22px;
+    }
+
+    .match {
+        grid-template-columns:
+            1fr;
+
+        gap: 10px;
+    }
+
+    .match-info,
+    .venue {
+        text-align: center;
+    }
+
+    .teams {
+        grid-template-columns:
+            1fr 55px 1fr;
+
+        gap: 8px;
+    }
+
+    .team-name {
+        font-size: 12px;
+    }
+
+    .clubs {
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 10px;
+    }
+
+    .club-card {
+        padding: 16px 10px;
+    }
+
+    .club-card .club-logo {
+        width: 65px;
+        height: 65px;
+    }
+}
+:root {
+    --font-body: 'Inter', sans-serif;
+    --font-heading: 'Montserrat', sans-serif;
+}
+
+body {
+    font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+.brand {
+    font-family: var(--font-heading);
+}
+</style>
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header>
+
+<div class="header-inner">
+
+    <div class="brand">
+
+        <div class="brand-logo">
+            KC
+        </div>
+
+        <div>
+
+            <h1>KAFINA CUP</h1>
+
+            <span>
+                Football Competition
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <button
+        class="admin-button"
+        onclick="openAdminLogin()"
+    >
+        ADMIN
+    </button>
+
+</div>
+
+</header>
+
+
+<!-- =========================================================
+     NAVIGATION
+========================================================= -->
+
+<nav>
+
+<div class="nav-inner">
+
+    <button
+        class="nav-button active"
+        onclick="showPage('home', this)"
+    >
+        Beranda
+    </button>
+
+    <button
+        class="nav-button"
+        onclick="showPage('matches', this)"
+    >
+        Pertandingan
+    </button>
+
+    <button
+        class="nav-button"
+        onclick="showPage('standings', this)"
+    >
+        Klasemen
+    </button>
+
+    <button
+        class="nav-button"
+        onclick="showPage('knockout', this)"
+    >
+        Knockout
+    </button>
+
+    <button
+        class="nav-button"
+        onclick="showPage('clubs', this)"
+    >
+        Klub
+    </button>
+
+    <button
+        class="nav-button"
+        onclick="showPage('rules', this)"
+    >
+        Peraturan
+    </button>
+
+</div>
+
+</nav>
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main>
+
+
+<!-- =========================================================
+     HOME
+========================================================= -->
+
+<section
+    id="page-home"
+    class="page active"
+>
+
+<div class="hero">
+
+    <h2>KAFINA CUP</h2>
+
+    <p>
+        Website resmi kompetisi sepak bola
+        KAFINA CUP.
+        Ikuti jadwal pertandingan, klasemen,
+        klub, dan perjalanan menuju juara.
+    </p>
+
+</div>
+
+
+<div class="stats">
+
+    <div class="stat">
+
+        <div class="stat-label">
+            JUMLAH KLUB
+        </div>
+
+        <div
+            class="stat-value"
+            id="stat-clubs"
+        >
+            8
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            PERTANDINGAN
+        </div>
+
+        <div
+            class="stat-value"
+            id="stat-matches"
+        >
+            15
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            GRUP
+        </div>
+
+        <div class="stat-value">
+            2
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            STATUS
+        </div>
+
+        <div
+            class="stat-value"
+            style="font-size:18px"
+        >
+            ACTIVE
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+<div class="section-title">
+
+<div>
+
+<h2>
+Pertandingan Terbaru
+</h2>
+
+<p>
+Hasil pertandingan terbaru
+</p>
+
+</div>
+
+</div>
+
+
+<div
+    id="latest-matches"
+    class="matches"
+>
+
+<div class="empty">
+
+<div class="empty-icon">
+⚽
+</div>
+
+Belum ada pertandingan.
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     MATCHES
+========================================================= -->
+
+<section
+    id="page-matches"
+    class="page"
+>
+
+<div class="section-title">
+
+<div>
+
+<h2>
+Pertandingan
+</h2>
+
+<p>
+Jadwal dan hasil pertandingan
+</p>
+
+</div>
+
+</div>
+
+
+<div
+    id="matches-container"
+    class="matches"
+>
+
+<div class="empty">
+
+<div class="empty-icon">
+📅
+</div>
+
+Belum ada pertandingan.
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     STANDINGS
+========================================================= -->
+
+<section
+    id="page-standings"
+    class="page"
+>
+
+<div class="section-title">
+
+<div>
+
+<h2>
+Klasemen
+</h2>
+
+<p>
+Klasemen sementara
+</p>
+
+</div>
+
+</div>
+
+
+<div class="groups">
+
+
+<!-- GROUP A -->
+
+<div class="card">
+
+<div class="section-title">
+
+<h2>
+GRUP A
+</h2>
+
+</div>
+
+
+<div class="table-wrapper">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>
+Klub
+</th>
+
+<th>
+M
+</th>
+
+<th>
+W
+</th>
+
+<th>
+D
+</th>
+
+<th>
+L
+</th>
+
+<th>
+GM
+</th>
+
+<th>
+GK
+</th>
+
+<th>
+SG
+</th>
+
+<th>
+P
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="standings-a">
+
+<tr>
+
+<td colspan="9">
+Belum ada data.
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<!-- GROUP B -->
+
+<div class="card">
+
+<div class="section-title">
+
+<h2>
+GRUP B
+</h2>
+
+</div>
+
+
+<div class="table-wrapper">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>
+Klub
+</th>
+
+<th>
+M
+</th>
+
+<th>
+W
+</th>
+
+<th>
+D
+</th>
+
+<th>
+L
+</th>
+
+<th>
+GM
+</th>
+
+<th>
+GK
+</th>
+
+<th>
+SG
+</th>
+
+<th>
+P
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="standings-b">
+
+<tr>
+
+<td colspan="9">
+Belum ada data.
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     KNOCKOUT
+========================================================= -->
+
+<section
+    id="page-knockout"
+    class="page"
+>
+
+<div class="section-title">
+
+<div>
+
+<h2>
+Knockout Stage
+</h2>
+
+<p>
+Semifinal dan final
+</p>
+
+</div>
+
+</div>
+
+
+<div class="bracket">
+
+
+<div class="round">
+
+<h3>
+SEMIFINAL
+</h3>
+
+
+<div class="knockout-match">
+
+<div class="knockout-title">
+SEMIFINAL 1
+</div>
+
+<div class="knockout-team">
+
+<span>
+Juara Grup A
+</span>
+
+<strong>
+-
+</strong>
+
+</div>
+
+<div class="knockout-team">
+
+<span>
+Runner-up Grup B
+</span>
+
+<strong>
+-
+</strong>
+
+</div>
+
+</div>
+
+
+<div class="knockout-match">
+
+<div class="knockout-title">
+SEMIFINAL 2
+</div>
+
+<div class="knockout-team">
+
+<span>
+Juara Grup B
+</span>
+
+<strong>
+-
+</strong>
+
+</div>
+
+<div class="knockout-team">
+
+<span>
+Runner-up Grup A
+</span>
+
+<strong>
+-
+</strong>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="round">
+
+<h3>
+FINAL
+</h3>
+
+
+<div class="knockout-match">
+
+<div class="knockout-title">
+FINAL
+</div>
+
+<div class="knockout-team">
+
+<span>
+Pemenang SF1
+</span>
+
+<strong>
+-
+</strong>
+
+</div>
+
+<div class="knockout-team">
+
+<span>
+Pemenang SF2
+</span>
+
+<strong>
+-
+</strong>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="round">
+
+<h3>
+CHAMPION
+</h3>
+
+
+<div class="card">
+
+<div style="
+text-align:center;
+padding:20px;
+">
+
+<div style="
+font-size:55px;
+margin-bottom:10px;
+">
+🏆
+</div>
+
+<strong>
+KAFINA CUP
+</strong>
+
+<p style="
+color:var(--muted);
+font-size:12px;
+margin-top:5px;
+">
+Champion
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     CLUBS
+========================================================= -->
+
+<section
+    id="page-clubs"
+    class="page"
+>
+
+<div class="section-title">
+
+<div>
+
+<h2>
+Klub
+</h2>
+
+<p>
+8 peserta KAFINA CUP
+</p>
+
+</div>
+
+
+<button
+    id="add-club-button"
+    class="button button-primary"
+    onclick="openClubModal()"
+    style="display:none"
+>
++ Tambah Klub
+</button>
+
+</div>
+
+
+<div
+    id="clubs-container"
+    class="clubs"
+>
+
+<!-- CLUBS WILL BE LOADED HERE -->
+
+<div class="club-card">
+
+<div class="club-logo">
+⚽
+</div>
+
+<h3>
+Club 1
+</h3>
+
+<p>
+Grup A
+</p>
+
+</div>
+
+
+<div class="club-card">
+
+<div class="club-logo">
+⚽
+</div>
+
+<h3>
+Club 2
+</h3>
+
+<p>
+Grup A
+</p>
+
+</div>
+
+
+<div class="club-card">
+
+<div class="club-logo">
+⚽
+</div>
+
+<h3>
+Club 3
+</h3>
+
+<p>
+Grup A
+</p>
+
+</div>
+
+
+<div class="club-card">
+
+<div class="club-logo">
+⚽
+</div>
+
+<h3>
+Club 4
+</h3>
+
+<p>
+Grup A
+</p>
+
+</div>
+
+
+<div class="club-card">
+
+<div class="club-logo">
+⚽
+</div>
+
+<h3>
+Club 5
+</h3>
+
+<p>
+Grup B
+</p>
+
+</div>
+
+
+<div class="club-card">
+
+<div class="club-logo">
+⚽
+</div>
+
+<h3>
+Club 6
+</h3>
+
+<p>
+Grup B
+</p>
+
+</div>
+
+
+<div class="club-card">
+
+<div class="club-logo">
+⚽
+</div>
+
+<h3>
+Club 7
+</h3>
+
+<p>
+Grup B
+</p>
+
+</div>
+
+
+<div class="club-card">
+
+<div class="club-logo">
+⚽
+</div>
+
+<h3>
+Club 8
+</h3>
+
+<p>
+Grup B
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     RULES
+========================================================= -->
+
+<section
+    id="page-rules"
+    class="page"
+>
+
+<div class="section-title">
+
+<div>
+
+<h2>
+Peraturan
+</h2>
+
+<p>
+Peraturan kompetisi
+</p>
+
+</div>
+
+</div>
+
+
+<div class="card rules">
+
+<h3>
+Format Kompetisi
+</h3>
+
+<p>
+KAFINA CUP diikuti oleh 8 klub
+yang dibagi menjadi 2 grup.
+Masing-masing grup terdiri dari
+4 klub.
+</p>
+
+
+<h3>
+Babak Grup
+</h3>
+
+<p>
+Setiap klub bertemu satu kali
+dengan seluruh klub lain di grupnya.
+</p>
+
+
+<h3>
+Kualifikasi
+</h3>
+
+<p>
+Dua klub teratas dari setiap grup
+berhak melaju ke semifinal.
+</p>
+
+
+<h3>
+Semifinal
+</h3>
+
+<p>
+Juara Grup A menghadapi
+runner-up Grup B.
+Juara Grup B menghadapi
+runner-up Grup A.
+</p>
+
+
+<h3>
+Final
+</h3>
+
+<p>
+Pemenang kedua semifinal
+bertemu di final.
+</p>
+
+</div>
+
+</section>
+
+
+</main>
+
+
+<!-- =========================================================
+     ADMIN LOGIN MODAL
+========================================================= -->
+
+<div
+    id="admin-modal"
+    class="modal"
+>
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h2>
+Admin Login
+</h2>
+
+<button
+    class="close"
+    onclick="closeAdminLogin()"
+>
+×
+</button>
+
+</div>
+
+
+<form
+    onsubmit="loginAdmin(event)"
+>
+
+<div class="form-group">
+
+<label>
+Email
+</label>
+
+<input
+    type="email"
+    id="admin-email"
+    placeholder="admin@email.com"
+    required
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>
+Password
+</label>
+
+<input
+    type="password"
+    id="admin-password"
+    placeholder="Password"
+    required
+>
+
+</div>
+
+
+<button
+    type="submit"
+    class="button button-primary"
+    style="width:100%"
+>
+LOGIN
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+     CLUB MODAL
+========================================================= -->
+
+<div
+    id="club-modal"
+    class="modal"
+>
+
+<div class="modal-box">
+
+<div class="modal-header">
+
+<h2>
+Tambah Klub
+</h2>
+
+<button
+    class="close"
+    onclick="closeClubModal()"
+>
+×
+</button>
+
+</div>
+
+
+<form
+    onsubmit="saveClub(event)"
+>
+
+
+<div class="form-group">
+
+<label>
+Nama Klub
+</label>
+
+<input
+    type="text"
+    id="club-name"
+    placeholder="Nama klub"
+    required
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>
+Grup
+</label>
+
+<select
+    id="club-group"
+    required
+>
+
+<option value="A">
+Grup A
+</option>
+
+<option value="B">
+Grup B
+</option>
+
+</select>
+
+</div>
+
+
+<!-- =====================================================
+     LOGO UPLOAD
+===================================================== -->
+
+<div class="form-group">
+
+<label>
+Logo Klub
+</label>
+
+
+<div class="logo-upload">
+
+
+<div
+    id="logo-preview"
+    class="logo-preview"
+>
+⚽
+</div>
+
+
+<label
+    for="club-logo-file"
+    class="upload-button"
+>
+📷 Pilih Logo
+</label>
+
+
+<input
+    type="file"
+    id="club-logo-file"
+    class="file-input"
+    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+    onchange="previewClubLogo(event)"
+>
+
+
+<div class="upload-info">
+
+PNG, JPG, WEBP atau SVG.
+Disarankan gambar berbentuk persegi.
+
+</div>
+
+
+</div>
+
+</div>
+
+
+<button
+    type="submit"
+    class="button button-primary"
+    style="width:100%"
+>
+SIMPAN KLUB
+</button>
+
+
+</form>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+     TOAST
+========================================================= -->
+
+<div
+    id="toast"
+    class="toast"
+></div>
+
+
+<!-- =========================================================
+     APPWRITE SDK
+========================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
+
+
+<script>
+
+/* =========================================================
+   APPWRITE CONFIGURATION
+========================================================= */
+
+const APPWRITE_CONFIG = {
+
+    endpoint:
+        "https://sgp.cloud.appwrite.io/v1",
+
+    projectId:
+        "6ad54ca7000423d99123",
+
+    databaseId:
+        "KAFINA_CUP",
+
+    clubsTableId:
+        "clubs",
+
+    matchesTableId:
+        "matches",
+
+    eventsTableId:
+        "match_events",
+
+    rulesTableId:
+        "rules",
+
+    /*
+        BUAT BUCKET STORAGE DI APPWRITE
+        UNTUK MENYIMPAN LOGO KLUB.
+
+        Contoh ID:
+        club-logos
+    */
+
+    storageBucketId:
+        "club-logos"
+
+};
+
+
+/* =========================================================
+   APPWRITE OBJECTS
+========================================================= */
+
+let client = null;
+
+let account = null;
+
+let databases = null;
+
+let storage = null;
+
+
+/* =========================================================
+   CURRENT USER
+========================================================= */
+
+let currentUser = null;
+
+
+/* =========================================================
+   INITIALIZE APPWRITE
+========================================================= */
+
+function initializeAppwrite() {
+
+    if (
+        APPWRITE_CONFIG.projectId ===
+        "MASUKKAN_PROJECT_ID"
+    ) {
+
+        console.warn(
+            "Appwrite belum dikonfigurasi."
+        );
+
+        return false;
+    }
+
+
+    try {
+
+        client =
+            new Appwrite.Client();
+
+
+        client
+            .setEndpoint(
+                APPWRITE_CONFIG.endpoint
+            )
+            .setProject(
+                APPWRITE_CONFIG.projectId
+            );
+
+
+        account =
+            new Appwrite.Account(
+                client
+            );
+
+
+        databases =
+            new Appwrite.TablesDB(
+                client
+            );
+
+
+        storage =
+            new Appwrite.Storage(
+                client
+            );
+
+
+        console.log(
+            "Appwrite berhasil terhubung."
+        );
+
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "Appwrite error:",
+            error
+        );
+
+        return false;
+    }
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+function showPage(
+    pageName,
+    button
+) {
+
+    document
+        .querySelectorAll(".page")
+        .forEach(page => {
+
+            page.classList.remove(
+                "active"
+            );
+
+        });
+
+
+    const target =
+        document.getElementById(
+            "page-" + pageName
+        );
+
+
+    if (target) {
+
+        target.classList.add(
+            "active"
+        );
+    }
+
+
+    document
+        .querySelectorAll(".nav-button")
+        .forEach(btn => {
+
+            btn.classList.remove(
+                "active"
+            );
+
+        });
+
+
+    if (button) {
+
+        button.classList.add(
+            "active"
+        );
+    }
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function showToast(message) {
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+
+    toast.textContent =
+        message;
+
+
+    toast.classList.add(
+        "show"
+    );
+
+
+    setTimeout(() => {
+
+        toast.classList.remove(
+            "show"
+        );
+
+    }, 3000);
+}
+
+
+/* =========================================================
+   ADMIN LOGIN
+========================================================= */
+
+function openAdminLogin() {
+
+    document
+        .getElementById(
+            "admin-modal"
+        )
+        .classList.add("show");
+}
+
+
+function closeAdminLogin() {
+
+    document
+        .getElementById(
+            "admin-modal"
+        )
+        .classList.remove("show");
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+async function loginAdmin(event) {
+
+    event.preventDefault();
+
+
+    if (!account) {
+
+        showToast(
+            "Appwrite belum dikonfigurasi."
+        );
+
+        return;
+    }
+
+
+    const email =
+        document.getElementById(
+            "admin-email"
+        ).value.trim();
+
+
+    const password =
+        document.getElementById(
+            "admin-password"
+        ).value;
+
+
+    try {
+
+        /*
+            Login Appwrite.
+
+            Akun admin dibuat dari
+            Appwrite Authentication.
+        */
+
+        await account.createEmailPasswordSession(
+            email,
+            password
+        );
+
+
+        currentUser =
+            await account.get();
+
+
+        closeAdminLogin();
+
+
+        updateAdminUI();
+
+
+        showToast(
+            "Login berhasil."
+        );
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        showToast(
+            "Login gagal: " +
+            error.message
+        );
+    }
+}
+
+
+/* =========================================================
+   CHECK SESSION
+========================================================= */
+
+async function checkAdminSession() {
+
+    if (!account) {
+        return;
+    }
+
+
+    try {
+
+        currentUser =
+            await account.get();
+
+
+        updateAdminUI();
+
+
+        console.log(
+            "Admin aktif:",
+            currentUser
+        );
+
+
+    } catch {
+
+        currentUser = null;
+
+        updateAdminUI();
+    }
+}
+
+
+/* =========================================================
+   ADMIN UI
+========================================================= */
+
+function updateAdminUI() {
+
+    const addButton =
+        document.getElementById(
+            "add-club-button"
+        );
+
+
+    if (!addButton) {
+        return;
+    }
+
+
+    if (currentUser) {
+
+        addButton.style.display =
+            "inline-flex";
+
+    } else {
+
+        addButton.style.display =
+            "none";
+    }
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logoutAdmin() {
+
+    if (!account) {
+        return;
+    }
+
+
+    try {
+
+        await account.deleteSession(
+            "current"
+        );
+
+
+        currentUser = null;
+
+
+        updateAdminUI();
+
+
+        showToast(
+            "Logout berhasil."
+        );
+
+
+    } catch (error) {
+
+        console.error(error);
+    }
+}
+
+
+/* =========================================================
+   CLUB MODAL
+========================================================= */
+
+function openClubModal() {
+
+    if (!currentUser) {
+
+        showToast(
+            "Silakan login sebagai admin."
+        );
+
+        return;
+    }
+
+
+    document
+        .getElementById(
+            "club-modal"
+        )
+        .classList.add("show");
+}
+
+
+function closeClubModal() {
+
+    document
+        .getElementById(
+            "club-modal"
+        )
+        .classList.remove("show");
+
+
+    document
+        .getElementById(
+            "club-name"
+        )
+        .value = "";
+
+
+    document
+        .getElementById(
+            "club-logo-file"
+        )
+        .value = "";
+
+
+    document
+        .getElementById(
+            "logo-preview"
+        )
+        .innerHTML = "⚽";
+}
+
+
+/* =========================================================
+   LOGO PREVIEW
+========================================================= */
+
+function previewClubLogo(event) {
+
+    const file =
+        event.target.files[0];
+
+
+    if (!file) {
+        return;
+    }
+
+
+    /*
+        Batas keamanan frontend.
+
+        Nanti server/database permission
+        tetap harus membatasi upload.
+    */
+
+    const maxSize =
+        5 * 1024 * 1024;
+
+
+    if (file.size > maxSize) {
+
+        showToast(
+            "Ukuran logo maksimal 5 MB."
+        );
+
+
+        event.target.value = "";
+
+        return;
+    }
+
+
+    const allowedTypes = [
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/svg+xml"
+    ];
+
+
+    if (
+        !allowedTypes.includes(
+            file.type
+        )
+    ) {
+
+        showToast(
+            "Format gambar tidak didukung."
+        );
+
+
+        event.target.value = "";
+
+        return;
+    }
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload = function(e) {
+
+        document
+            .getElementById(
+                "logo-preview"
+            )
+            .innerHTML = `
+                <img
+                    src="${e.target.result}"
+                    alt="Preview Logo"
+                >
+            `;
+    };
+
+
+    reader.readAsDataURL(file);
+}
+
+
+/* =========================================================
+   UPLOAD LOGO TO APPWRITE STORAGE
+========================================================= */
+
+async function uploadClubLogo(file) {
+
+    if (!storage) {
+
+        throw new Error(
+            "Appwrite Storage belum terhubung."
+        );
+    }
+
+
+    /*
+        Appwrite membutuhkan file ID unik.
+
+        ID unik dibuat menggunakan:
+        Appwrite.ID.unique()
+    */
+
+    const fileId =
+        Appwrite.ID.unique();
+
+
+    const uploadedFile =
+        await storage.createFile(
+            APPWRITE_CONFIG.storageBucketId,
+            fileId,
+            file
+        );
+
+
+    return uploadedFile;
+}
+
+
+/* =========================================================
+   CREATE CLUB
+========================================================= */
+
+async function saveClub(event) {
+
+    event.preventDefault();
+
+
+    if (!currentUser) {
+
+        showToast(
+            "Anda harus login sebagai admin."
+        );
+
+        return;
+    }
+
+
+    if (!databases) {
+
+        showToast(
+            "Database Appwrite belum terhubung."
+        );
+
+        return;
+    }
+
+
+    const name =
+        document
+            .getElementById(
+                "club-name"
+            )
+            .value
+            .trim();
+
+
+    const group =
+        document
+            .getElementById(
+                "club-group"
+            )
+            .value;
+
+
+    const file =
+        document
+            .getElementById(
+                "club-logo-file"
+            )
+            .files[0];
+
+
+    if (!name) {
+
+        showToast(
+            "Nama klub wajib diisi."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        let logoFileId = "";
+
+
+        /*
+            1. Upload logo terlebih dahulu
+        */
+
+        if (file) {
+
+            showToast(
+                "Mengupload logo..."
+            );
+
+
+            const uploadedFile =
+                await uploadClubLogo(
+                    file
+                );
+
+
+            logoFileId =
+                uploadedFile.$id;
+        }
+
+
+        /*
+            2. Simpan data klub
+        */
+
+        await databases.createRow(
+            APPWRITE_CONFIG.databaseId,
+            APPWRITE_CONFIG.clubsTableId,
+            Appwrite.ID.unique(),
+            {
+
+                name: name,
+
+                group: group,
+
+                logoFileId:
+                    logoFileId
+
+            }
+        );
+
+
+        closeClubModal();
+
+
+        showToast(
+            "Klub berhasil disimpan."
+        );
+
+
+        await loadClubs();
+
+
+    } catch (error) {
+
+        console.error(
+            "Gagal menyimpan klub:",
+            error
+        );
+
+
+        showToast(
+            "Gagal menyimpan klub: " +
+            error.message
+        );
+    }
+}
+
+
+/* =========================================================
+   GET LOGO URL
+========================================================= */
+
+function getLogoUrl(fileId) {
+
+    if (
+        !fileId ||
+        !APPWRITE_CONFIG.projectId
+    ) {
+
+        return "";
+    }
+
+
+    /*
+        URL preview file Appwrite Storage.
+
+        Browser akan mengambil gambar
+        langsung dari Appwrite.
+    */
+
+    return (
+        APPWRITE_CONFIG.endpoint +
+        "/storage/buckets/" +
+        APPWRITE_CONFIG.storageBucketId +
+        "/files/" +
+        fileId +
+        "/view?project=" +
+        APPWRITE_CONFIG.projectId
+    );
+}
+
+
+/* =========================================================
+   LOAD CLUBS
+========================================================= */
+
+async function loadClubs() {
+
+    if (!databases) {
+        return;
+    }
+
+
+    try {
+
+        /*
+            Appwrite TablesDB.
+
+            Semua klub akan diambil
+            dari table clubs.
+        */
+
+        const result =
+            await databases.listRows(
+                APPWRITE_CONFIG.databaseId,
+                APPWRITE_CONFIG.clubsTableId
+            );
+
+
+        renderClubs(
+            result.rows
+        );
+
+
+        updateStatsFromDatabase(
+            result.rows
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Gagal mengambil klub:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   RENDER CLUBS
+========================================================= */
+
+function renderClubs(clubs) {
+
+    const container =
+        document.getElementById(
+            "clubs-container"
+        );
+
+
+    if (!clubs.length) {
+
+        container.innerHTML = `
+
+            <div
+                class="empty"
+                style="grid-column:1/-1"
+            >
+
+                <div class="empty-icon">
+                    ⚽
+                </div>
+
+                Belum ada klub.
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        clubs.map(club => {
+
+            const logo =
+                getLogoUrl(
+                    club.logoFileId
+                );
+
+
+            return `
+
+                <div class="club-card">
+
+                    <div class="club-logo">
+
+                        ${
+                            logo
+
+                            ?
+
+                            `
+                            <img
+                                src="${logo}"
+                                alt="${escapeHtml(club.name)}"
+                            >
+                            `
+
+                            :
+
+                            `⚽`
+                        }
+
+                    </div>
+
+
+                    <h3>
+                        ${escapeHtml(club.name)}
+                    </h3>
+
+
+                    <p>
+                        Grup ${escapeHtml(club.group)}
+                    </p>
+
+                </div>
+
+            `;
+
+        }).join("");
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+/* =========================================================
+   UPDATE STATS
+========================================================= */
+
+function updateStatsFromDatabase(
+    clubs
+) {
+
+    const element =
+        document.getElementById(
+            "stat-clubs"
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            clubs.length;
+    }
+}
+
+
+/* =========================================================
+   LOAD MATCHES
+========================================================= */
+
+async function loadMatches() {
+
+    /*
+        Akan kita aktifkan setelah
+        table matches dibuat.
+    */
+
+    console.log(
+        "loadMatches siap digunakan."
+    );
+}
+
+
+/* =========================================================
+   CALCULATE STANDINGS
+========================================================= */
+
+function calculateStandings(
+    clubs,
+    matches
+) {
+
+    const standings = {};
+
+
+    clubs.forEach(club => {
+
+        standings[club.$id] = {
+
+            id: club.$id,
+
+            name: club.name,
+
+            group: club.group,
+
+            played: 0,
+
+            won: 0,
+
+            drawn: 0,
+
+            lost: 0,
+
+            gf: 0,
+
+            ga: 0,
+
+            gd: 0,
+
+            points: 0
+        };
+    });
+
+
+    matches.forEach(match => {
+
+        if (
+            match.status !==
+            "finished"
+        ) {
+            return;
+        }
+
+
+        const home =
+            standings[
+                match.homeClubId
+            ];
+
+
+        const away =
+            standings[
+                match.awayClubId
+            ];
+
+
+        if (!home || !away) {
+            return;
+        }
+
+
+        const homeScore =
+            Number(
+                match.homeScore || 0
+            );
+
+
+        const awayScore =
+            Number(
+                match.awayScore || 0
+            );
+
+
+        home.played++;
+
+        away.played++;
+
+
+        home.gf +=
+            homeScore;
+
+        home.ga +=
+            awayScore;
+
+
+        away.gf +=
+            awayScore;
+
+        away.ga +=
+            homeScore;
+
+
+        if (
+            homeScore >
+            awayScore
+        ) {
+
+            home.won++;
+
+            away.lost++;
+
+            home.points += 3;
+
+        }
+
+        else if (
+            homeScore <
+            awayScore
+        ) {
+
+            away.won++;
+
+            home.lost++;
+
+            away.points += 3;
+
+        }
+
+        else {
+
+            home.drawn++;
+
+            away.drawn++;
+
+            home.points++;
+
+            away.points++;
+        }
+    });
+
+
+    Object.values(
+        standings
+    ).forEach(team => {
+
+        team.gd =
+            team.gf -
+            team.ga;
+
+    });
+
+
+    return Object.values(
+        standings
+    );
+}
+
+
+/* =========================================================
+   SORT STANDINGS
+========================================================= */
+
+function sortStandings(
+    standings
+) {
+
+    return standings.sort(
+        (a, b) => {
+
+            if (
+                b.points !==
+                a.points
+            ) {
+
+                return (
+                    b.points -
+                    a.points
+                );
+            }
+
+
+            if (
+                b.gd !==
+                a.gd
+            ) {
+
+                return (
+                    b.gd -
+                    a.gd
+                );
+            }
+
+
+            return (
+                b.gf -
+                a.gf
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+
+        console.log(
+            "KAFINA CUP loading..."
+        );
+
+
+        initializeAppwrite();
+
+
+        await checkAdminSession();
+
+
+        await loadClubs();
+
+
+        await loadMatches();
+
+    }
+);
+
+</script>
+
+</body>
+</html>
