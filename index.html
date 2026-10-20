@@ -2799,63 +2799,36 @@ function closeAdminLogin() {
 /* =========================================================
    LOGIN
 ========================================================= */
-
 async function loginAdmin(event) {
 
     event.preventDefault();
 
-
     if (!account) {
-
-        showToast(
-            "Appwrite belum dikonfigurasi."
-        );
-
+        showToast("Appwrite belum dikonfigurasi.");
         return;
     }
 
-
     const email =
-        document.getElementById(
-            "admin-email"
-        ).value.trim();
-
+        document.getElementById("admin-email").value.trim();
 
     const password =
-        document.getElementById(
-            "admin-password"
-        ).value;
-
+        document.getElementById("admin-password").value;
 
     try {
-
-        /*
-            Login Appwrite.
-
-            Akun admin dibuat dari
-            Appwrite Authentication.
-        */
 
         await account.createEmailPasswordSession(
             email,
             password
         );
 
-
         currentUser =
             await account.get();
 
-
         closeAdminLogin();
-
 
         updateAdminUI();
 
-
-        showToast(
-            "Login berhasil."
-        );
-
+        showToast("Login berhasil.");
 
     } catch (error) {
 
@@ -2867,8 +2840,6 @@ async function loginAdmin(event) {
         );
     }
 }
-
-
 /* =========================================================
    CHECK SESSION
 ========================================================= */
