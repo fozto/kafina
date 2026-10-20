@@ -2614,6 +2614,12 @@ let storage = null;
 
 let currentUser = null;
 
+let clubs = [];
+
+let editingClubId = null;
+
+let editingOldLogoId = null;
+
 
 /* =========================================================
    INITIALIZE APPWRITE
@@ -2794,10 +2800,6 @@ function closeAdminLogin() {
         .classList.remove("show");
 }
 
-
-/* =========================================================
-   LOGIN
-========================================================= */
 async function loginAdmin(event) {
     event.preventDefault();
 
@@ -2821,30 +2823,65 @@ async function loginAdmin(event) {
     }
 
     try {
+        // Pastikan session lama sudah tidak aktif
+        try {
+            await account.deleteSession("current");
+        } catch (e) {
+            // Abaikan jika memang tidak ada session
+        }
+
         console.log("Mencoba login:", email);
 
-        const session = await account.createEmailPasswordSession({
-            email: email,
-            password: password
-        });
+        const session =
+            await account.createEmailPasswordSession(
+                email,
+                password
+            );
 
-        console.log("Session berhasil:", session);
+        console.log(
+            "Session berhasil:",
+            session
+        );
 
-        currentUser = await account.get();
+        currentUser =
+            await account.get();
 
-        console.log("User berhasil login:", currentUser);
+        console.log(
+            "User berhasil login:",
+            currentUser
+        );
 
         closeAdminLogin();
+
         updateAdminUI();
 
         showToast("Login berhasil.");
 
+        // Bersihkan password setelah login
+        document.getElementById(
+            "admin-password"
+        ).value = "";
+
+        // Refresh data
+        await loadClubs();
+
     } catch (error) {
-        console.error("APPWRITE LOGIN ERROR:", error);
+
+        console.error(
+            "APPWRITE LOGIN ERROR:",
+            error
+        );
+
+        currentUser = null;
+
+        updateAdminUI();
 
         showToast(
             "Login gagal: " +
-            (error.message || "Terjadi kesalahan.")
+            (
+                error.message ||
+                "Terjadi kesalahan."
+            )
         );
     }
 }
@@ -2882,11 +2919,6 @@ async function checkAdminSession() {
     }
 }
 
-
-/* =========================================================
-   ADMIN UI
-========================================================= */
-
 function updateAdminUI() {
 
     const addButton =
@@ -2894,61 +2926,102 @@ function updateAdminUI() {
             "add-club-button"
         );
 
-
-    if (!addButton) {
-        return;
-    }
-
+    const adminButton =
+        document.querySelector(
+            ".admin-button"
+        );
 
     if (currentUser) {
 
-        addButton.style.display =
-            "inline-flex";
+        if (addButton) {
+            addButton.style.display =
+                "inline-flex";
+        }
+
+        if (adminButton) {
+            adminButton.textContent =
+                "LOGOUT";
+
+            adminButton.onclick =
+                logoutAdmin;
+        }
 
     } else {
 
-        addButton.style.display =
-            "none";
+        if (addButton) {
+            addButton.style.display =
+                "none";
+        }
+
+        if (adminButton) {
+            adminButton.textContent =
+                "ADMIN";
+
+            adminButton.onclick =
+                openAdminLogin;
+        }
     }
 }
-
 
 /* =========================================================
    LOGOUT
 ========================================================= */
-
 async function logoutAdmin() {
 
     if (!account) {
         return;
     }
 
-
     try {
 
-        await account.deleteSession(
-            "current"
-        );
-
+        await account.deleteSession("current");
 
         currentUser = null;
 
-
         updateAdminUI();
 
+        showToast("Logout berhasil.");
 
-        showToast(
-            "Logout berhasil."
-        );
+        // Bersihkan form login
+        const emailInput =
+            document.getElementById("admin-email");
 
+        const passwordInput =
+            document.getElementById("admin-password");
+
+        if (emailInput) {
+            emailInput.value = "";
+        }
+
+        if (passwordInput) {
+            passwordInput.value = "";
+        }
+
+        // Tutup semua modal
+        document
+            .getElementById("admin-modal")
+            ?.classList.remove("show");
+
+        document
+            .getElementById("club-modal")
+            ?.classList.remove("show");
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "LOGOUT ERROR:",
+            error
+        );
+
+        showToast(
+            "Gagal logout: " +
+            (
+                error.message ||
+                "Terjadi kesalahan."
+            )
+        );
     }
 }
-
-
 /* =========================================================
    CLUB MODAL
 ========================================================= */
@@ -3248,97 +3321,6 @@ async function loadClubs() {
 }/* =========================================================
    RENDER CLUBS
 ========================================================= */
-function renderClubs(clubs) {
-
-    const container =
-        document.getElementById("clubs-container");
-
-    if (!container) return;
-
-    if (!clubs.length) {
-
-        container.innerHTML = `
-            <div
-                class="empty"
-                style="grid-column:1/-1"
-            >
-                <div class="empty-icon">
-                    ⚽
-                </div>
-
-                Belum ada klub.
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML = clubs.map(club => {
-
-        const logo =
-            getLogoUrl(club.logoFileId);
-
-        return `
-            <div class="club-card">
-
-                <div class="club-logo">
-
-                    ${
-                        logo
-                            ? `
-                                <img
-                                    src="${logo}"
-                                    alt="${escapeHtml(club.name)}"
-                                >
-                              `
-                            : `
-                                <div class="club-logo-placeholder">
-                                    LOGO
-                                </div>
-                              `
-                    }
-
-                </div>
-
-                <h3>
-                    ${escapeHtml(club.name)}
-                </h3>
-
-                <p>
-                    Grup ${escapeHtml(club.group)}
-                </p>
-
-                ${
-                    currentUser
-                        ? `
-                            <div class="club-actions">
-
-                                <button
-                                    type="button"
-                                    class="btn-edit"
-                                    onclick="editClub('${club.$id}')"
-                                >
-                                    Edit
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="btn-delete"
-                                    onclick="deleteClub('${club.$id}')"
-                                >
-                                    Hapus
-                                </button>
-
-                            </div>
-                          `
-                        : ""
-                }
-
-            </div>
-        `;
-
-    }).join("");
-}
 /* =========================================================
    ESCAPE HTML
 ========================================================= */
@@ -3619,8 +3601,6 @@ document.addEventListener(
     }
 );
 
-let editingClubId = null;
-let editingOldLogoId = null;
 
 function editClub(clubId) {
     const club = clubs.find(c => c.$id === clubId);
