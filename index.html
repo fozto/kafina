@@ -2800,6 +2800,7 @@ function closeAdminLogin() {
         .classList.remove("show");
 }
 
+
 async function loginAdmin(event) {
     event.preventDefault();
 
@@ -2823,14 +2824,8 @@ async function loginAdmin(event) {
     }
 
     try {
-        // Pastikan session lama sudah tidak aktif
-        try {
-            await account.deleteSession("current");
-        } catch (e) {
-            // Abaikan jika memang tidak ada session
-        }
 
-        console.log("Mencoba login:", email);
+        console.log("Login:", email);
 
         const session =
             await account.createEmailPasswordSession(
@@ -2855,15 +2850,14 @@ async function loginAdmin(event) {
 
         updateAdminUI();
 
+        await loadClubs();
+
         showToast("Login berhasil.");
 
-        // Bersihkan password setelah login
+        // Bersihkan password
         document.getElementById(
             "admin-password"
         ).value = "";
-
-        // Refresh data
-        await loadClubs();
 
     } catch (error) {
 
@@ -2885,6 +2879,8 @@ async function loginAdmin(event) {
         );
     }
 }
+
+
 /* =========================================================
    CHECK SESSION
 ========================================================= */
@@ -2966,6 +2962,8 @@ function updateAdminUI() {
 /* =========================================================
    LOGOUT
 ========================================================= */
+
+
 async function logoutAdmin() {
 
     if (!account) {
@@ -2973,6 +2971,8 @@ async function logoutAdmin() {
     }
 
     try {
+
+        console.log("Logout...");
 
         await account.deleteSession("current");
 
@@ -2982,29 +2982,7 @@ async function logoutAdmin() {
 
         showToast("Logout berhasil.");
 
-        // Bersihkan form login
-        const emailInput =
-            document.getElementById("admin-email");
-
-        const passwordInput =
-            document.getElementById("admin-password");
-
-        if (emailInput) {
-            emailInput.value = "";
-        }
-
-        if (passwordInput) {
-            passwordInput.value = "";
-        }
-
-        // Tutup semua modal
-        document
-            .getElementById("admin-modal")
-            ?.classList.remove("show");
-
-        document
-            .getElementById("club-modal")
-            ?.classList.remove("show");
+        console.log("Session berhasil dihapus.");
 
     } catch (error) {
 
@@ -3022,6 +3000,7 @@ async function logoutAdmin() {
         );
     }
 }
+
 /* =========================================================
    CLUB MODAL
 ========================================================= */
