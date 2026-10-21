@@ -3747,7 +3747,13 @@ document.addEventListener(
 );
 
 
+
 function editClub(clubId) {
+    if (!currentUser) {
+        showToast("Silakan login sebagai admin.");
+        return;
+    }
+
     const club = clubs.find(c => c.$id === clubId);
 
     if (!club) {
@@ -3756,18 +3762,24 @@ function editClub(clubId) {
     }
 
     editingClubId = club.$id;
-    editingOldLogoId = club.logoFileId || null;
+    editingOldLogoUrl = club.logo_url || "";
+    editingOldLogoId = null;
 
-    document.getElementById("club-name").value = club.name || "";
-    document.getElementById("club-group").value = club.group || "A";
+    document.getElementById("club-name").value =
+        club.name || "";
 
-    const fileInput = document.getElementById("club-logo-file");
+    document.getElementById("club-group").value =
+        club.group_name || "A";
+
+    const fileInput =
+        document.getElementById("club-logo-file");
 
     if (fileInput) {
         fileInput.value = "";
     }
 
-    const title = document.getElementById("club-modal-title");
+    const title =
+        document.getElementById("club-modal-title");
 
     if (title) {
         title.textContent = "Edit Klub";
