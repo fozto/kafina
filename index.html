@@ -3199,7 +3199,9 @@ async function uploadClubLogo(file) {
 
     return uploadedFile;
 }
+```javascript
 async function saveClub(event) {
+
     event.preventDefault();
 
     if (!account || !currentUser) {
@@ -3207,90 +3209,231 @@ async function saveClub(event) {
         return;
     }
 
-    const name = document.getElementById("club-name").value.trim();
-    const group = document.getElementById("club-group").value;
-    const fileInput = document.getElementById("club-logo-file");
-    const file = fileInput?.files?.[0] || null;
+    const name =
+        document
+            .getElementById("club-name")
+            .value
+            .trim();
+
+    const group =
+        document
+            .getElementById("club-group")
+            .value;
+
+    const fileInput =
+        document.getElementById(
+            "club-logo-file"
+        );
+
+    const file =
+        fileInput?.files?.[0] || null;
+
 
     if (!name) {
         showToast("Nama klub wajib diisi.");
         return;
     }
 
+
     try {
-        let logoFileId = editingOldLogoId || "";
+
+        /*
+         * ==========================================
+         * LOGO
+         * ==========================================
+         */
+
+        let logoUrl =
+            editingOldLogoUrl || "";
+
 
         if (file) {
-            showToast("Mengupload logo...");
 
-            const uploadedFile = await uploadClubLogo(file);
-            logoFileId = uploadedFile.$id;
+            showToast(
+                "Mengupload logo..."
+            );
+
+
+            const uploadedFile =
+                await uploadClubLogo(file);
+
+
+            const fileId =
+                uploadedFile.$id;
+
+
+            /*
+             * URL untuk menampilkan logo
+             */
+
+            logoUrl =
+                `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.storageBucketId}/files/${fileId}/view?project=${APPWRITE_CONFIG.projectId}`;
+
+
+            /*
+             * Kalau sedang edit dan ada logo lama,
+             * hapus logo lama setelah upload baru berhasil.
+             */
+
+            if (
+                editingOldLogoId &&
+                editingOldLogoId !== fileId
+            ) {
+
+                try {
+
+                    await storage.deleteFile({
+                        bucketId:
+                            APPWRITE_CONFIG.storageBucketId,
+
+                        fileId:
+                            editingOldLogoId
+                    });
+
+                } catch (error) {
+
+                    console.warn(
+                        "Logo lama gagal dihapus:",
+                        error
+                    );
+                }
+            }
+
+
+            /*
+             * Simpan ID logo lama untuk
+             * kebutuhan edit berikutnya.
+             */
+
+            editingOldLogoId =
+                fileId;
         }
+
+
+        /*
+         * ==========================================
+         * EDIT CLUB
+         * ==========================================
+         */
 
         if (editingClubId) {
 
             await databases.updateRow({
-                databaseId: APPWRITE_CONFIG.databaseId,
-                tableId: APPWRITE_CONFIG.clubsTableId,
-                rowId: editingClubId,
+
+                databaseId:
+                    APPWRITE_CONFIG.databaseId,
+
+                tableId:
+                    APPWRITE_CONFIG.clubsTableId,
+
+                rowId:
+                    editingClubId,
+
                 data: {
-    name: name,
-    group_name: group,
-    logoFileId: logoFileId
-}
+
+                    name:
+                        name,
+
+                    group_name:
+                        group,
+
+                    logo_url:
+                        logoUrl
+                }
             });
 
-            if (
-                file &&
-                editingOldLogoId &&
-                editingOldLogoId !== logoFileId
-            ) {
-                try {
-                    await storage.deleteFile({
-                        bucketId: APPWRITE_CONFIG.storageBucketId,
-                        fileId: editingOldLogoId
-                    });
-                } catch (error) {
-                    console.warn("Logo lama gagal dihapus:", error);
-                }
-            }
 
-            showToast("Klub berhasil diperbarui.");
+            showToast(
+                "Klub berhasil diperbarui."
+            );
 
-        } else {
 
-           await databases.createRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.clubsTableId,
-    rowId: Appwrite.ID.unique(),
-    data: {
-        name: name,
-        group_name: group,
-        logoFileId: logoFileId
-    }
-});
-
-            showToast("Klub berhasil ditambahkan.");
         }
 
+
+        /*
+         * ==========================================
+         * TAMBAH CLUB
+         * ==========================================
+         */
+
+        else {
+
+            await databases.createRow({
+
+                databaseId:
+                    APPWRITE_CONFIG.databaseId,
+
+                tableId:
+                    APPWRITE_CONFIG.clubsTableId,
+
+                rowId:
+                    Appwrite.ID.unique(),
+
+                data: {
+
+                    name:
+                        name,
+
+                    group_name:
+                        group,
+
+                    logo_url:
+                        logoUrl
+                }
+            });
+
+
+            showToast(
+                "Klub berhasil ditambahkan."
+            );
+        }
+
+
+        /*
+         * ==========================================
+         * RESET
+         * ==========================================
+         */
+
         editingClubId = null;
+
         editingOldLogoId = null;
+
+        editingOldLogoUrl = null;
+
 
         closeClubModal();
 
-        document.getElementById("club-form")?.reset();
+
+        document
+            .getElementById(
+                "club-form"
+            )
+            ?.reset();
+
 
         await loadClubs();
 
+
     } catch (error) {
-        console.error("Gagal menyimpan klub:", error);
+
+        console.error(
+            "Gagal menyimpan klub:",
+            error
+        );
+
 
         showToast(
             "Gagal menyimpan klub: " +
-            (error.message || "Unknown error")
+            (
+                error.message ||
+                "Unknown error"
+            )
         );
     }
 }
+```
 /* =========================================================
    LOAD CLUBS
 ========================================================= */
