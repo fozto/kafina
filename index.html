@@ -3234,10 +3234,10 @@ async function saveClub(event) {
                 tableId: APPWRITE_CONFIG.clubsTableId,
                 rowId: editingClubId,
                 data: {
-                    name: name,
-                    group: group,
-                    logoFileId: logoFileId
-                }
+    name: name,
+    group_name: group,
+    logoFileId: logoFileId
+}
             });
 
             if (
