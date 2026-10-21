@@ -3259,16 +3259,16 @@ async function saveClub(event) {
 
         } else {
 
-            await databases.createRow({
-                databaseId: APPWRITE_CONFIG.databaseId,
-                tableId: APPWRITE_CONFIG.clubsTableId,
-                rowId: Appwrite.ID.unique(),
-                data: {
-                    name: name,
-                    group: group,
-                    logoFileId: logoFileId
-                }
-            });
+           await databases.createRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.clubsTableId,
+    rowId: Appwrite.ID.unique(),
+    data: {
+        name: name,
+        group_name: group,
+        logoFileId: logoFileId
+    }
+});
 
             showToast("Klub berhasil ditambahkan.");
         }
