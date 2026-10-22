@@ -3652,7 +3652,6 @@ function updateStatsFromDatabase(
     }
 }
 
-
 /* =========================================
    INPUT PERTANDINGAN KAFINA CUP
 ========================================= */
@@ -3660,296 +3659,1431 @@ function updateStatsFromDatabase(
 let editingMatchId = null;
 let matches = [];
 
-// Buka modal input pertandingan
+
+/* =========================================================
+   OPEN MATCH MODAL
+========================================================= */
+
 function openMatchModal() {
+
     if (!currentUser || !databases) {
-        showToast("Silakan login sebagai admin.");
+
+        showToast(
+            "Silakan login sebagai admin."
+        );
+
         return;
     }
 
     editingMatchId = null;
 
-    document.getElementById("match-form").reset();
-    document.getElementById("match-modal-title").textContent =
+    const form =
+        document.getElementById("match-form");
+
+    if (form) {
+        form.reset();
+    }
+
+    document.getElementById(
+        "match-modal-title"
+    ).textContent =
         "Input Pertandingan";
 
     populateMatchClubOptions();
 
-    document.getElementById("match-modal").classList.add("show");
+    document.getElementById(
+        "match-modal"
+    ).classList.add("show");
 }
 
-// Tutup modal
+
+/* =========================================================
+   CLOSE MATCH MODAL
+========================================================= */
+
 function closeMatchModal() {
-    document.getElementById("match-modal").classList.remove("show");
-    document.getElementById("match-form").reset();
+
+    document.getElementById(
+        "match-modal"
+    ).classList.remove("show");
+
+    const form =
+        document.getElementById("match-form");
+
+    if (form) {
+        form.reset();
+    }
+
     editingMatchId = null;
 }
 
-// Isi dropdown klub sesuai grup
+
+/* =========================================================
+   POPULATE CLUB OPTIONS
+========================================================= */
+
 function populateMatchClubOptions() {
-    const group = document.getElementById("match-group").value;
-    const homeSelect = document.getElementById("home-club");
-    const awaySelect = document.getElementById("away-club");
 
-    const groupClubs = clubs.filter(club =>
-        (club.group_name || club.group) === group
-    );
+    const group =
+        document.getElementById(
+            "match-group"
+        ).value;
 
-    function fillSelect(select, placeholder) {
+    const homeSelect =
+        document.getElementById(
+            "home-club"
+        );
+
+    const awaySelect =
+        document.getElementById(
+            "away-club"
+        );
+
+
+    if (!homeSelect || !awaySelect) {
+        return;
+    }
+
+
+    const groupClubs =
+        clubs.filter(club => {
+
+            const clubGroup =
+                club.group_name ||
+                club.group;
+
+            return clubGroup === group;
+        });
+
+
+    function fillSelect(
+        select,
+        placeholder
+    ) {
+
         select.replaceChildren();
 
-        const option = document.createElement("option");
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
         option.value = "";
-        option.textContent = placeholder;
+
+        option.textContent =
+            placeholder;
+
         select.appendChild(option);
 
+
         groupClubs.forEach(club => {
-            const item = document.createElement("option");
-            item.value = club.$id;
-            item.textContent = club.name;
+
+            const item =
+                document.createElement(
+                    "option"
+                );
+
+            item.value =
+                club.$id;
+
+            item.textContent =
+                club.name;
+
             select.appendChild(item);
+
         });
     }
 
-    fillSelect(homeSelect, "Pilih klub kandang");
-    fillSelect(awaySelect, "Pilih klub tandang");
+
+    fillSelect(
+        homeSelect,
+        "Pilih klub kandang"
+    );
+
+
+    fillSelect(
+        awaySelect,
+        "Pilih klub tandang"
+    );
 }
 
-// Perbarui pilihan klub saat grup berubah
-document.getElementById("match-group").addEventListener(
-    "change",
-    populateMatchClubOptions
+
+/* =========================================================
+   GROUP CHANGE
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        const groupSelect =
+            document.getElementById(
+                "match-group"
+            );
+
+
+        if (groupSelect) {
+
+            groupSelect.addEventListener(
+                "change",
+                populateMatchClubOptions
+            );
+        }
+    }
 );
 
-// Simpan pertandingan baru atau perubahan pertandingan
+
+/* =========================================================
+   SAVE MATCH
+========================================================= */
+
 async function saveMatch(event) {
+
     event.preventDefault();
 
+
     if (!currentUser || !databases) {
-        showToast("Silakan login sebagai admin.");
-        return;
-    }
-
-    const group = document.getElementById("match-group").value;
-    const homeClubId = document.getElementById("home-club").value;
-    const awayClubId = document.getElementById("away-club").value;
-    const matchDate = document.getElementById("match-date").value;
-    const matchTime = document.getElementById("match-time").value;
-    const venue = document.getElementById("match-venue").value.trim();
-    const status = document.getElementById("match-status").value;
-    
-const homeValue = document.getElementById("home-score").value;
-const awayValue = document.getElementById("away-score").value;
-
-let homeScore = null;
-let awayScore = null;
-
-if (status === "finished") {
-    if (homeValue === "" || awayValue === "") {
-        showToast("Masukkan skor kedua klub jika pertandingan selesai.");
-        return;
-    }
-
-    homeScore = Number(homeValue);
-    awayScore = Number(awayValue);
-
-    if (
-        !Number.isInteger(homeScore) ||
-        !Number.isInteger(awayScore) ||
-        homeScore < 0 ||
-        awayScore < 0
-    ) {
-        showToast("Skor harus berupa bilangan bulat minimal 0.");
-        return;
-    }
-}
-
-
-const data = {
-    Stage: "Group Stage",
-    group_name: group,
-    home_club_id: homeClubId,
-    away_club_id: awayClubId,
-    kickoff: `${matchDate}T${matchTime}:00`,
-    venue: venue,
-    status: status,
-    home_score: homeScore,
-    away_score: awayScore
-};
-
-
-
-    try {
-        if (editingMatchId) {
-            await databases.updateRow({
-                databaseId: APPWRITE_CONFIG.databaseId,
-                tableId: APPWRITE_CONFIG.matchesTableId,
-                rowId: editingMatchId,
-                data
-            });
-
-            showToast("Pertandingan berhasil diperbarui.");
-        } else {
-            await databases.createRow({
-                databaseId: APPWRITE_CONFIG.databaseId,
-                tableId: APPWRITE_CONFIG.matchesTableId,
-                rowId: Appwrite.ID.unique(),
-                data
-            });
-
-            showToast("Pertandingan berhasil ditambahkan.");
-        }
-
-        closeMatchModal();
-
-        await loadMatches();
-    } catch (error) {
-        console.error("Gagal menyimpan pertandingan:", error);
 
         showToast(
-            "Gagal menyimpan pertandingan: " +
-            (error.message || "Periksa konfigurasi Appwrite.")
+            "Silakan login sebagai admin."
         );
-    }
-}
 
-// Edit pertandingan
-function editMatch(matchId) {
-    if (!currentUser) {
-        showToast("Silakan login sebagai admin.");
         return;
     }
 
-    const match = matches.find(item => item.$id === matchId);
 
-    if (!match) {
-        showToast("Pertandingan tidak ditemukan.");
-        return;
-    }
+    const group =
+        document.getElementById(
+            "match-group"
+        ).value;
 
-    editingMatchId = matchId;
 
-    document.getElementById("match-form").reset();
-    document.getElementById("match-modal-title").textContent =
-        "Edit Pertandingan";
+    const homeClubId =
+        document.getElementById(
+            "home-club"
+        ).value;
 
-    document.getElementById("match-group").value =
-        match.group_name || "A";
 
-    populateMatchClubOptions();
+    const awayClubId =
+        document.getElementById(
+            "away-club"
+        ).value;
 
-    document.getElementById("home-club").value =
-        match.homeClubId || "";
 
-    document.getElementById("away-club").value =
-        match.awayClubId || "";
+    const matchDate =
+        document.getElementById(
+            "match-date"
+        ).value;
 
-    document.getElementById("match-date").value =
-        match.matchDate || "";
 
-    document.getElementById("match-time").value =
-        match.matchTime || "";
+    const matchTime =
+        document.getElementById(
+            "match-time"
+        ).value;
 
-    document.getElementById("match-venue").value =
-        match.venue || "";
 
-    document.getElementById("match-status").value =
-        match.status || "scheduled";
+    const venue =
+        document.getElementById(
+            "match-venue"
+        ).value.trim();
 
-    document.getElementById("home-score").value =
-        match.homeScore ?? "";
 
-    document.getElementById("away-score").value =
-        match.awayScore ?? "";
+    const status =
+        document.getElementById(
+            "match-status"
+        ).value;
 
-    document.getElementById("match-modal").classList.add("show");
-}
 
-// Hapus pertandingan
-async function deleteMatch(matchId) {
-    if (!currentUser || !databases) {
-        showToast("Silakan login sebagai admin.");
-        return;
-    }
+    const homeValue =
+        document.getElementById(
+            "home-score"
+        ).value;
 
-    const match = matches.find(item => item.$id === matchId);
 
-    if (!match) {
-        showToast("Pertandingan tidak ditemukan.");
-        return;
-    }
+    const awayValue =
+        document.getElementById(
+            "away-score"
+        ).value;
 
-    if (!confirm("Yakin ingin menghapus pertandingan ini?")) {
-        return;
-    }
 
-    try {
-        await databases.deleteRow({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId: APPWRITE_CONFIG.matchesTableId,
-            rowId: matchId
-        });
+    /* =====================================================
+       VALIDASI
+    ===================================================== */
 
-        showToast("Pertandingan berhasil dihapus.");
-
-        await loadMatches();
-    } catch (error) {
-        console.error("Gagal menghapus pertandingan:", error);
+    if (!homeClubId) {
 
         showToast(
-            "Gagal menghapus pertandingan: " +
-            (error.message || "Periksa izin Appwrite.")
+            "Pilih klub kandang."
         );
+
+        return;
     }
-}
 
-// Hitung dan tampilkan klasemen
-function renderMatchStandings() {
-    const rows = calculateStandings(clubs, matches);
 
-    ["A", "B"].forEach(group => {
-        const tbody = document.getElementById(`standings-${group.toLowerCase()}`);
-        if (!tbody) return;
+    if (!awayClubId) {
 
-        tbody.replaceChildren();
-
-        const sorted = sortStandings(
-            rows.filter(team => team.group === group)
+        showToast(
+            "Pilih klub tandang."
         );
 
-        if (!sorted.length) {
-            tbody.innerHTML = '<tr><td colspan="9">Belum ada data.</td></tr>';
+        return;
+    }
+
+
+    if (homeClubId === awayClubId) {
+
+        showToast(
+            "Klub kandang dan tandang tidak boleh sama."
+        );
+
+        return;
+    }
+
+
+    if (!matchDate) {
+
+        showToast(
+            "Tanggal pertandingan wajib diisi."
+        );
+
+        return;
+    }
+
+
+    if (!matchTime) {
+
+        showToast(
+            "Waktu pertandingan wajib diisi."
+        );
+
+        return;
+    }
+
+
+    if (!venue) {
+
+        showToast(
+            "Lokasi pertandingan wajib diisi."
+        );
+
+        return;
+    }
+
+
+    /* =====================================================
+       SCORE
+    ===================================================== */
+
+    let homeScore = null;
+    let awayScore = null;
+
+
+    if (status === "finished") {
+
+        if (
+            homeValue === "" ||
+            awayValue === ""
+        ) {
+
+            showToast(
+                "Masukkan skor kedua klub jika pertandingan selesai."
+            );
+
             return;
         }
 
-        sorted.forEach(team => {
-            const tr = document.createElement("tr");
 
-            [
-                team.name,
-                team.played,
-                team.won,
-                team.drawn,
-                team.lost,
-                team.gf,
-                team.ga,
-                team.gd,
-                team.points
-            ].forEach((value, index) => {
-                const td = document.createElement("td");
-                td.textContent = value;
+        homeScore =
+            Number(homeValue);
 
-                if (index === 0) {
-                    td.style.fontWeight = "800";
-                }
 
-                tr.appendChild(td);
+        awayScore =
+            Number(awayValue);
+
+
+        if (
+            !Number.isInteger(homeScore) ||
+            !Number.isInteger(awayScore) ||
+            homeScore < 0 ||
+            awayScore < 0
+        ) {
+
+            showToast(
+                "Skor harus berupa bilangan bulat minimal 0."
+            );
+
+            return;
+        }
+
+    } else {
+
+        homeScore = null;
+
+        awayScore = null;
+    }
+
+
+    /* =====================================================
+       DATA APPWRITE
+    ===================================================== */
+
+    const data = {
+
+        stage:
+            "Group Stage",
+
+        group_name:
+            group,
+
+        home_club_id:
+            homeClubId,
+
+        away_club_id:
+            awayClubId,
+
+        kickoff:
+            `${matchDate}T${matchTime}:00`,
+
+        venue:
+            venue,
+
+        status:
+            status,
+
+        home_score:
+            homeScore,
+
+        away_score:
+            awayScore
+    };
+
+
+    console.log(
+        "DATA MATCH:",
+        data
+    );
+
+
+    try {
+
+        /* =================================================
+           UPDATE
+        ================================================= */
+
+        if (editingMatchId) {
+
+            await databases.updateRow({
+
+                databaseId:
+                    APPWRITE_CONFIG.databaseId,
+
+                tableId:
+                    APPWRITE_CONFIG.matchesTableId,
+
+                rowId:
+                    editingMatchId,
+
+                data:
+                    data
             });
 
-            tbody.appendChild(tr);
-        });
-    });
+
+            showToast(
+                "Pertandingan berhasil diperbarui."
+            );
+
+
+        }
+
+        /* =================================================
+           CREATE
+        ================================================= */
+
+        else {
+
+            await databases.createRow({
+
+                databaseId:
+                    APPWRITE_CONFIG.databaseId,
+
+                tableId:
+                    APPWRITE_CONFIG.matchesTableId,
+
+                rowId:
+                    Appwrite.ID.unique(),
+
+                data:
+                    data
+            });
+
+
+            showToast(
+                "Pertandingan berhasil ditambahkan."
+            );
+        }
+
+
+        closeMatchModal();
+
+
+        await loadMatches();
+
+
+    } catch (error) {
+
+        console.error(
+            "Gagal menyimpan pertandingan:",
+            error
+        );
+
+
+        showToast(
+            "Gagal menyimpan pertandingan: " +
+            (
+                error.message ||
+                "Periksa konfigurasi Appwrite."
+            )
+        );
+    }
 }
+
+
+/* =========================================================
+   LOAD MATCHES
+========================================================= */
+
+async function loadMatches() {
+
+    if (!databases) {
+        return;
+    }
+
+
+    try {
+
+        const result =
+            await databases.listRows({
+
+                databaseId:
+                    APPWRITE_CONFIG.databaseId,
+
+                tableId:
+                    APPWRITE_CONFIG.matchesTableId
+            });
+
+
+        matches =
+            result.rows || [];
+
+
+        console.log(
+            "MATCHES:",
+            matches
+        );
+
+
+        renderMatches();
+
+
+        renderMatchStandings();
+
+
+        updateMatchStats();
+
+
+    } catch (error) {
+
+        console.error(
+            "Gagal mengambil pertandingan:",
+            error
+        );
+
+
+        showToast(
+            "Gagal memuat pertandingan."
+        );
+    }
+}
+
+
+/* =========================================================
+   GET CLUB
+========================================================= */
+
+function getClubById(
+    clubId
+) {
+
+    return clubs.find(
+        club =>
+            club.$id === clubId
+    );
+}
+
+
+/* =========================================================
+   FORMAT DATE
+========================================================= */
+
+function formatMatchDate(
+    kickoff
+) {
+
+    if (!kickoff) {
+        return "-";
+    }
+
+
+    const date =
+        new Date(kickoff);
+
+
+    if (Number.isNaN(
+        date.getTime()
+    )) {
+
+        return "-";
+    }
+
+
+    return date.toLocaleDateString(
+        "id-ID",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
+}
+
+
+/* =========================================================
+   FORMAT TIME
+========================================================= */
+
+function formatMatchTime(
+    kickoff
+) {
+
+    if (!kickoff) {
+        return "-";
+    }
+
+
+    const date =
+        new Date(kickoff);
+
+
+    if (Number.isNaN(
+        date.getTime()
+    )) {
+
+        return "-";
+    }
+
+
+    return date.toLocaleTimeString(
+        "id-ID",
+        {
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
+}
+
+
+/* =========================================================
+   RENDER MATCHES
+========================================================= */
+
+function renderMatches() {
+
+    const containers = [
+
+        document.getElementById(
+            "matches-container"
+        ),
+
+        document.getElementById(
+            "latest-matches"
+        )
+
+    ];
+
+
+    containers.forEach(
+        container => {
+
+            if (!container) {
+                return;
+            }
+
+
+            container.replaceChildren();
+
+
+            if (!matches.length) {
+
+                const empty =
+                    document.createElement(
+                        "div"
+                    );
+
+                empty.className =
+                    "empty";
+
+
+                empty.innerHTML = `
+
+                    <div class="empty-icon">
+                        ⚽
+                    </div>
+
+                    Belum ada pertandingan.
+
+                `;
+
+
+                container.appendChild(
+                    empty
+                );
+
+                return;
+            }
+
+
+            /*
+             * Urutkan berdasarkan kickoff
+             */
+
+            const sortedMatches =
+                [...matches].sort(
+                    (a, b) =>
+                        new Date(
+                            a.kickoff
+                        ) -
+                        new Date(
+                            b.kickoff
+                        )
+                );
+
+
+            /*
+             * Beranda hanya tampilkan
+             * beberapa pertandingan terbaru.
+             */
+
+            const displayMatches =
+                container.id ===
+                    "latest-matches"
+
+                    ? sortedMatches.slice(
+                        0,
+                        5
+                    )
+
+                    : sortedMatches;
+
+
+            displayMatches.forEach(
+                match => {
+
+                    container.appendChild(
+                        createMatchElement(
+                            match
+                        )
+                    );
+
+                }
+            );
+
+        }
+    );
+}
+
+
+/* =========================================================
+   CREATE MATCH ELEMENT
+========================================================= */
+
+function createMatchElement(
+    match
+) {
+
+    const homeClub =
+        getClubById(
+            match.home_club_id
+        );
+
+
+    const awayClub =
+        getClubById(
+            match.away_club_id
+        );
+
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+
+    element.className =
+        "match";
+
+
+    const homeName =
+        homeClub?.name ||
+        "Klub Kandang";
+
+
+    const awayName =
+        awayClub?.name ||
+        "Klub Tandang";
+
+
+    const homeLogo =
+        homeClub?.logo_url ||
+        "";
+
+
+    const awayLogo =
+        awayClub?.logo_url ||
+        "";
+
+
+    const isFinished =
+        match.status ===
+        "finished";
+
+
+    const scoreText =
+        isFinished
+
+            ? `${match.home_score ?? 0} - ${match.away_score ?? 0}`
+
+            : "VS";
+
+
+    element.innerHTML = `
+
+        <div class="match-info">
+
+            <strong>
+                ${escapeHtml(
+                    formatMatchDate(
+                        match.kickoff
+                    )
+                )}
+            </strong>
+
+            ${escapeHtml(
+                formatMatchTime(
+                    match.kickoff
+                )
+            )}
+
+        </div>
+
+
+        <div class="teams">
+
+
+            <div class="team">
+
+                <div class="team-logo">
+
+                    ${
+                        homeLogo
+
+                        ? `
+                            <img
+                                src="${escapeHtml(
+                                    homeLogo
+                                )}"
+                                alt="${escapeHtml(
+                                    homeName
+                                )}"
+                            >
+                        `
+
+                        : "⚽"
+                    }
+
+                </div>
+
+
+                <div class="team-name">
+
+                    ${escapeHtml(
+                        homeName
+                    )}
+
+                </div>
+
+            </div>
+
+
+            <div class="score">
+
+                ${escapeHtml(
+                    scoreText
+                )}
+
+                <small>
+
+                    ${
+                        isFinished
+                            ? "FT"
+                            : "MATCH"
+                    }
+
+                </small>
+
+            </div>
+
+
+            <div class="team">
+
+                <div class="team-name">
+
+                    ${escapeHtml(
+                        awayName
+                    )}
+
+                </div>
+
+
+                <div class="team-logo">
+
+                    ${
+                        awayLogo
+
+                        ? `
+                            <img
+                                src="${escapeHtml(
+                                    awayLogo
+                                )}"
+                                alt="${escapeHtml(
+                                    awayName
+                                )}"
+                            >
+                        `
+
+                        : "⚽"
+                    }
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <div class="venue">
+
+            📍 ${escapeHtml(
+                match.venue || "-"
+            )}
+
+
+            ${
+                currentUser
+
+                ? `
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:flex-end;
+                            gap:6px;
+                            margin-top:8px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            class="btn-edit"
+                            onclick="editMatch('${match.$id}')"
+                        >
+                            Edit
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn-delete"
+                            onclick="deleteMatch('${match.$id}')"
+                        >
+                            Hapus
+                        </button>
+
+                    </div>
+
+                `
+
+                : ""
+            }
+
+        </div>
+
+    `;
+
+
+    return element;
+}
+
+
+/* =========================================================
+   EDIT MATCH
+========================================================= */
+
+function editMatch(
+    matchId
+) {
+
+    if (!currentUser) {
+
+        showToast(
+            "Silakan login sebagai admin."
+        );
+
+        return;
+    }
+
+
+    const match =
+        matches.find(
+            item =>
+                item.$id === matchId
+        );
+
+
+    if (!match) {
+
+        showToast(
+            "Pertandingan tidak ditemukan."
+        );
+
+        return;
+    }
+
+
+    editingMatchId =
+        matchId;
+
+
+    document.getElementById(
+        "match-form"
+    ).reset();
+
+
+    document.getElementById(
+        "match-modal-title"
+    ).textContent =
+        "Edit Pertandingan";
+
+
+    document.getElementById(
+        "match-group"
+    ).value =
+        match.group_name || "A";
+
+
+    populateMatchClubOptions();
+
+
+    document.getElementById(
+        "home-club"
+    ).value =
+        match.home_club_id || "";
+
+
+    document.getElementById(
+        "away-club"
+    ).value =
+        match.away_club_id || "";
+
+
+    /*
+     * Ambil tanggal dan waktu
+     * dari kickoff
+     */
+
+    if (match.kickoff) {
+
+        const kickoff =
+            new Date(
+                match.kickoff
+            );
+
+
+        if (!Number.isNaN(
+            kickoff.getTime()
+        )) {
+
+            const year =
+                kickoff.getFullYear();
+
+
+            const month =
+                String(
+                    kickoff.getMonth() + 1
+                ).padStart(
+                    2,
+                    "0"
+                );
+
+
+            const day =
+                String(
+                    kickoff.getDate()
+                ).padStart(
+                    2,
+                    "0"
+                );
+
+
+            const hours =
+                String(
+                    kickoff.getHours()
+                ).padStart(
+                    2,
+                    "0"
+                );
+
+
+            const minutes =
+                String(
+                    kickoff.getMinutes()
+                ).padStart(
+                    2,
+                    "0"
+                );
+
+
+            document.getElementById(
+                "match-date"
+            ).value =
+                `${year}-${month}-${day}`;
+
+
+            document.getElementById(
+                "match-time"
+            ).value =
+                `${hours}:${minutes}`;
+        }
+    }
+
+
+    document.getElementById(
+        "match-venue"
+    ).value =
+        match.venue || "";
+
+
+    document.getElementById(
+        "match-status"
+    ).value =
+        match.status ||
+        "scheduled";
+
+
+    document.getElementById(
+        "home-score"
+    ).value =
+        match.home_score ?? "";
+
+
+    document.getElementById(
+        "away-score"
+    ).value =
+        match.away_score ?? "";
+
+
+    document.getElementById(
+        "match-modal"
+    ).classList.add(
+        "show"
+    );
+}
+
+
+/* =========================================================
+   DELETE MATCH
+========================================================= */
+
+async function deleteMatch(
+    matchId
+) {
+
+    if (!currentUser || !databases) {
+
+        showToast(
+            "Silakan login sebagai admin."
+        );
+
+        return;
+    }
+
+
+    const match =
+        matches.find(
+            item =>
+                item.$id === matchId
+        );
+
+
+    if (!match) {
+
+        showToast(
+            "Pertandingan tidak ditemukan."
+        );
+
+        return;
+    }
+
+
+    const homeClub =
+        getClubById(
+            match.home_club_id
+        );
+
+
+    const awayClub =
+        getClubById(
+            match.away_club_id
+        );
+
+
+    const confirmed =
+        confirm(
+            `Hapus pertandingan ${
+                homeClub?.name || "?"
+            } vs ${
+                awayClub?.name || "?"
+            }?`
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        await databases.deleteRow({
+
+            databaseId:
+                APPWRITE_CONFIG.databaseId,
+
+            tableId:
+                APPWRITE_CONFIG.matchesTableId,
+
+            rowId:
+                matchId
+        });
+
+
+        showToast(
+            "Pertandingan berhasil dihapus."
+        );
+
+
+        await loadMatches();
+
+
+    } catch (error) {
+
+        console.error(
+            "Gagal menghapus pertandingan:",
+            error
+        );
+
+
+        showToast(
+            "Gagal menghapus pertandingan: " +
+            (
+                error.message ||
+                "Periksa izin Appwrite."
+            )
+        );
+    }
+}
+
+
+/* =========================================================
+   UPDATE MATCH STATS
+========================================================= */
+
+function updateMatchStats() {
+
+    const element =
+        document.getElementById(
+            "stat-matches"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        matches.length;
+}
+
+
+/* =========================================================
+   RENDER STANDINGS
+========================================================= */
+
+function renderMatchStandings() {
+
+    const rows =
+        calculateStandings(
+            clubs,
+            matches
+        );
+
+
+    ["A", "B"].forEach(
+        group => {
+
+            const tbody =
+                document.getElementById(
+                    `standings-${group.toLowerCase()}`
+                );
+
+
+            if (!tbody) {
+                return;
+            }
+
+
+            tbody.replaceChildren();
+
+
+            const sorted =
+                sortStandings(
+                    rows.filter(
+                        team =>
+                            team.group ===
+                            group
+                    )
+                );
+
+
+            if (!sorted.length) {
+
+                const tr =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                const td =
+                    document.createElement(
+                        "td"
+                    );
+
+
+                td.colSpan = 9;
+
+
+                td.textContent =
+                    "Belum ada data.";
+
+
+                tr.appendChild(td);
+
+
+                tbody.appendChild(tr);
+
+
+                return;
+            }
+
+
+            sorted.forEach(
+                (team, index) => {
+
+                    const tr =
+                        document.createElement(
+                            "tr"
+                        );
+
+
+                    if (index < 2) {
+
+                        tr.className =
+                            "qualified";
+                    }
+
+
+                    const values = [
+
+                        team.name,
+
+                        team.played,
+
+                        team.won,
+
+                        team.drawn,
+
+                        team.lost,
+
+                        team.gf,
+
+                        team.ga,
+
+                        team.gd,
+
+                        team.points
+
+                    ];
+
+
+                    values.forEach(
+                        (value, valueIndex) => {
+
+                            const td =
+                                document.createElement(
+                                    "td"
+                                );
+
+
+                            td.textContent =
+                                value;
+
+
+                            if (
+                                valueIndex === 0
+                            ) {
+
+                                td.style.fontWeight =
+                                    "800";
+                            }
+
+
+                            tr.appendChild(td);
+
+                        }
+                    );
+
+
+                    tbody.appendChild(tr);
+
+                }
+            );
+
+        }
+    );
+}
+
 
 /* =========================================================
    CALCULATE STANDINGS
@@ -3963,141 +5097,166 @@ function calculateStandings(
     const standings = {};
 
 
-    clubs.forEach(club => {
+    clubs.forEach(
+        club => {
 
-        standings[club.$id] = {
-
-            id: club.$id,
-
-            name: club.name,
-
-            group: club.group_name || club.group || "A",
-
-            played: 0,
-
-            won: 0,
-
-            drawn: 0,
-
-            lost: 0,
-
-            gf: 0,
-
-            ga: 0,
-
-            gd: 0,
-
-            points: 0
-        };
-    });
-
-
-    matches.forEach(match => {
-
-        if (
-            match.status !==
-            "finished"
-        ) {
-            return;
-        }
-
-
-        const home =
             standings[
-                match.homeClubId
-            ];
+                club.$id
+            ] = {
 
+                id:
+                    club.$id,
 
-        const away =
-            standings[
-                match.awayClubId
-            ];
+                name:
+                    club.name,
 
+                group:
+                    club.group_name ||
+                    club.group ||
+                    "A",
 
-        if (!home || !away) {
-            return;
-        }
+                played:
+                    0,
 
+                won:
+                    0,
 
-        const homeScore =
-            Number(
-                match.homeScore || 0
-            );
+                drawn:
+                    0,
 
+                lost:
+                    0,
 
-        const awayScore =
-            Number(
-                match.awayScore || 0
-            );
+                gf:
+                    0,
 
+                ga:
+                    0,
 
-        home.played++;
+                gd:
+                    0,
 
-        away.played++;
-
-
-        home.gf +=
-            homeScore;
-
-        home.ga +=
-            awayScore;
-
-
-        away.gf +=
-            awayScore;
-
-        away.ga +=
-            homeScore;
-
-
-        if (
-            homeScore >
-            awayScore
-        ) {
-
-            home.won++;
-
-            away.lost++;
-
-            home.points += 3;
+                points:
+                    0
+            };
 
         }
+    );
 
-        else if (
-            homeScore <
-            awayScore
-        ) {
 
-            away.won++;
+    matches.forEach(
+        match => {
 
-            home.lost++;
+            if (
+                match.status !==
+                "finished"
+            ) {
 
-            away.points += 3;
+                return;
+            }
+
+
+            const home =
+                standings[
+                    match.home_club_id
+                ];
+
+
+            const away =
+                standings[
+                    match.away_club_id
+                ];
+
+
+            if (!home || !away) {
+
+                return;
+            }
+
+
+            const homeScore =
+                Number(
+                    match.home_score ?? 0
+                );
+
+
+            const awayScore =
+                Number(
+                    match.away_score ?? 0
+                );
+
+
+            home.played++;
+
+            away.played++;
+
+
+            home.gf +=
+                homeScore;
+
+            home.ga +=
+                awayScore;
+
+
+            away.gf +=
+                awayScore;
+
+            away.ga +=
+                homeScore;
+
+
+            if (
+                homeScore >
+                awayScore
+            ) {
+
+                home.won++;
+
+                away.lost++;
+
+                home.points += 3;
+
+            }
+
+            else if (
+                homeScore <
+                awayScore
+            ) {
+
+                away.won++;
+
+                home.lost++;
+
+                away.points += 3;
+
+            }
+
+            else {
+
+                home.drawn++;
+
+                away.drawn++;
+
+                home.points++;
+
+                away.points++;
+            }
 
         }
-
-        else {
-
-            home.drawn++;
-
-            away.drawn++;
-
-            home.points++;
-
-            away.points++;
-        }
-    });
+    );
 
 
     Object.values(
         standings
-    ).forEach(team => {
+    ).forEach(
+        team => {
 
-        team.gd =
-            team.gf -
-            team.ga;
+            team.gd =
+                team.gf -
+                team.ga;
 
-    });
+        }
+    );
 
 
     return Object.values(
@@ -4148,7 +5307,6 @@ function sortStandings(
         }
     );
 }
-
 
 /* =========================================================
    INITIALIZE
