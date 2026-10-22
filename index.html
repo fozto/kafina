@@ -3779,16 +3779,17 @@ async function saveMatch(event) {
     }
 
     const data = {
-        group_name: group,
-        homeClubId,
-        awayClubId,
-        matchDate,
-        matchTime,
-        venue,
-        status,
-        homeScore,
-        awayScore
-    };
+    Stage: "Group Stage",
+    group_name: group,
+    homeClubId,
+    awayClubId,
+    matchDate,
+    matchTime,
+    venue,
+    status,
+    homeScore,
+    awayScore
+};
 
     try {
         if (editingMatchId) {
