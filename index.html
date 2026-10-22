@@ -3954,32 +3954,32 @@ async function saveMatch(event) {
     /* =========================================
        DATA APPWRITE
     ========================================= */
-const data = {
+    
 
-    Stage: "Group Stage",
+    const data = {
 
-    group_name: group,
+        Stage: "Group Stage",
 
-    home_club_id: homeClubId,
+        group_name: group,
 
-    away_club_id: awayClubId,
+        home_club_id: homeClubId,
 
-    kickoff:
-        `${matchDate}T${matchTime}:00`,
+        away_club_id: awayClubId,
 
-    venue: venue,
+        kickoff:
+            `${matchDate}T${matchTime}:00`,
 
-    status: status,
+        venue: venue,
 
-    home_score: homeScore,
+        status: status,
 
-    away_score: awayScore,
+        home_score: homeScore,
 
-    home_penalty_score: null,
+        away_score: awayScore
 
-    away_penalty_score: null
+    };
 
-};
+
     console.log(
         "DATA MATCH YANG DIKIRIM:",
         data
@@ -4073,246 +4073,7 @@ const data = {
         );
     }
 }
-    /* =====================================================
-       VALIDASI
-    ===================================================== */
 
-    if (!homeClubId) {
-
-        showToast(
-            "Pilih klub kandang."
-        );
-
-        return;
-    }
-
-
-    if (!awayClubId) {
-
-        showToast(
-            "Pilih klub tandang."
-        );
-
-        return;
-    }
-
-
-    if (homeClubId === awayClubId) {
-
-        showToast(
-            "Klub kandang dan tandang tidak boleh sama."
-        );
-
-        return;
-    }
-
-
-    if (!matchDate) {
-
-        showToast(
-            "Tanggal pertandingan wajib diisi."
-        );
-
-        return;
-    }
-
-
-    if (!matchTime) {
-
-        showToast(
-            "Waktu pertandingan wajib diisi."
-        );
-
-        return;
-    }
-
-
-    if (!venue) {
-
-        showToast(
-            "Lokasi pertandingan wajib diisi."
-        );
-
-        return;
-    }
-
-
-    /* =====================================================
-       SCORE
-    ===================================================== */
-
-    let homeScore = null;
-    let awayScore = null;
-
-
-    if (status === "finished") {
-
-        if (
-            homeValue === "" ||
-            awayValue === ""
-        ) {
-
-            showToast(
-                "Masukkan skor kedua klub jika pertandingan selesai."
-            );
-
-            return;
-        }
-
-
-        homeScore =
-            Number(homeValue);
-
-
-        awayScore =
-            Number(awayValue);
-
-
-        if (
-            !Number.isInteger(homeScore) ||
-            !Number.isInteger(awayScore) ||
-            homeScore < 0 ||
-            awayScore < 0
-        ) {
-
-            showToast(
-                "Skor harus berupa bilangan bulat minimal 0."
-            );
-
-            return;
-        }
-
-    } else {
-
-        homeScore = null;
-
-        awayScore = null;
-    }
-
-
-    /* =====================================================
-       DATA APPWRITE
-    ===================================================== */
-
-    const data = {
-
-        stage:
-            "Group Stage",
-
-        group_name:
-            group,
-
-        home_club_id:
-            homeClubId,
-
-        away_club_id:
-            awayClubId,
-
-        kickoff:
-            `${matchDate}T${matchTime}:00`,
-
-        venue:
-            venue,
-
-        status:
-            status,
-
-        home_score:
-            homeScore,
-
-        away_score:
-            awayScore
-    };
-
-
-    console.log(
-        "DATA MATCH:",
-        data
-    );
-
-
-    try {
-
-        /* =================================================
-           UPDATE
-        ================================================= */
-
-        if (editingMatchId) {
-
-            await databases.updateRow({
-
-                databaseId:
-                    APPWRITE_CONFIG.databaseId,
-
-                tableId:
-                    APPWRITE_CONFIG.matchesTableId,
-
-                rowId:
-                    editingMatchId,
-
-                data:
-                    data
-            });
-
-
-            showToast(
-                "Pertandingan berhasil diperbarui."
-            );
-
-
-        }
-
-        /* =================================================
-           CREATE
-        ================================================= */
-
-        else {
-
-            await databases.createRow({
-
-                databaseId:
-                    APPWRITE_CONFIG.databaseId,
-
-                tableId:
-                    APPWRITE_CONFIG.matchesTableId,
-
-                rowId:
-                    Appwrite.ID.unique(),
-
-                data:
-                    data
-            });
-
-
-            showToast(
-                "Pertandingan berhasil ditambahkan."
-            );
-        }
-
-
-        closeMatchModal();
-
-
-        await loadMatches();
-
-
-    } catch (error) {
-
-        console.error(
-            "Gagal menyimpan pertandingan:",
-            error
-        );
-
-
-        showToast(
-            "Gagal menyimpan pertandingan: " +
-            (
-                error.message ||
-                "Periksa konfigurasi Appwrite."
-            )
-        );
-    }
-}
 
 
 /* =========================================================
