@@ -3737,48 +3737,34 @@ async function saveMatch(event) {
     const matchTime = document.getElementById("match-time").value;
     const venue = document.getElementById("match-venue").value.trim();
     const status = document.getElementById("match-status").value;
-    const homeValue = document.getElementById("home-score").value;
-    const awayValue = document.getElementById("away-score").value;
+    
+const homeValue = document.getElementById("home-score").value;
+const awayValue = document.getElementById("away-score").value;
 
-    if (!homeClubId || !awayClubId) {
-        showToast("Pilih klub kandang dan tandang.");
+let homeScore = null;
+let awayScore = null;
+
+if (status === "finished") {
+    if (homeValue === "" || awayValue === "") {
+        showToast("Masukkan skor kedua klub jika pertandingan selesai.");
         return;
     }
 
-    if (homeClubId === awayClubId) {
-        showToast("Klub kandang dan tandang harus berbeda.");
+    homeScore = Number(homeValue);
+    awayScore = Number(awayValue);
+
+    if (
+        !Number.isInteger(homeScore) ||
+        !Number.isInteger(awayScore) ||
+        homeScore < 0 ||
+        awayScore < 0
+    ) {
+        showToast("Skor harus berupa bilangan bulat minimal 0.");
         return;
     }
+}
 
-    if (!matchDate || !matchTime || !venue) {
-        showToast("Lengkapi tanggal, waktu, dan lokasi.");
-        return;
-    }
-
-    let homeScore = null;
-    let awayScore = null;
-
-    if (status === "finished") {
-        if (homeValue === "" || awayValue === "") {
-            showToast("Masukkan kedua skor pertandingan.");
-            return;
-        }
-
-        homeScore = Number(homeValue);
-        awayScore = Number(awayValue);
-
-        if (
-            !Number.isInteger(homeScore) ||
-            !Number.isInteger(awayScore) ||
-            homeScore < 0 ||
-            awayScore < 0
-        ) {
-            showToast("Skor harus berupa bilangan bulat positif atau nol.");
-            return;
-        }
-    }
-
-    const data = {
+const data = {
     Stage: "Group Stage",
     group_name: group,
     homeClubId,
@@ -3790,6 +3776,7 @@ async function saveMatch(event) {
     homeScore,
     awayScore
 };
+
 
     try {
         if (editingMatchId) {
