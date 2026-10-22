@@ -3832,81 +3832,247 @@ document.addEventListener(
         }
     }
 );
-
-
-/* =========================================================
-   SAVE MATCH
-========================================================= */
-
 async function saveMatch(event) {
-
     event.preventDefault();
 
-
     if (!currentUser || !databases) {
+        showToast("Silakan login sebagai admin.");
+        return;
+    }
 
+    const group =
+        document.getElementById("match-group").value;
+
+    const homeClubId =
+        document.getElementById("home-club").value;
+
+    const awayClubId =
+        document.getElementById("away-club").value;
+
+    const matchDate =
+        document.getElementById("match-date").value;
+
+    const matchTime =
+        document.getElementById("match-time").value;
+
+    const venue =
+        document.getElementById("match-venue").value.trim();
+
+    const status =
+        document.getElementById("match-status").value;
+
+    const homeValue =
+        document.getElementById("home-score").value;
+
+    const awayValue =
+        document.getElementById("away-score").value;
+
+
+    /* =========================================
+       VALIDASI
+    ========================================= */
+
+    if (!group) {
+        showToast("Grup wajib dipilih.");
+        return;
+    }
+
+    if (!homeClubId) {
+        showToast("Klub kandang wajib dipilih.");
+        return;
+    }
+
+    if (!awayClubId) {
+        showToast("Klub tandang wajib dipilih.");
+        return;
+    }
+
+    if (homeClubId === awayClubId) {
         showToast(
-            "Silakan login sebagai admin."
+            "Klub kandang dan tandang tidak boleh sama."
         );
+        return;
+    }
 
+    if (!matchDate || !matchTime) {
+        showToast(
+            "Tanggal dan waktu pertandingan wajib diisi."
+        );
+        return;
+    }
+
+    if (!venue) {
+        showToast("Lokasi pertandingan wajib diisi.");
         return;
     }
 
 
-    const group =
-        document.getElementById(
-            "match-group"
-        ).value;
+    /* =========================================
+       SKOR
+    ========================================= */
+
+    let homeScore = null;
+    let awayScore = null;
+
+    if (status === "finished") {
+
+        if (
+            homeValue === "" ||
+            awayValue === ""
+        ) {
+            showToast(
+                "Masukkan skor kedua klub jika pertandingan selesai."
+            );
+
+            return;
+        }
+
+        homeScore =
+            Number(homeValue);
+
+        awayScore =
+            Number(awayValue);
 
 
-    const homeClubId =
-        document.getElementById(
-            "home-club"
-        ).value;
+        if (
+            !Number.isInteger(homeScore) ||
+            !Number.isInteger(awayScore) ||
+            homeScore < 0 ||
+            awayScore < 0
+        ) {
+
+            showToast(
+                "Skor harus berupa bilangan bulat minimal 0."
+            );
+
+            return;
+        }
+
+    }
 
 
-    const awayClubId =
-        document.getElementById(
-            "away-club"
-        ).value;
+    /* =========================================
+       DATA APPWRITE
+    ========================================= */
+const data = {
+
+    Stage: "Group Stage",
+
+    group_name: group,
+
+    home_club_id: homeClubId,
+
+    away_club_id: awayClubId,
+
+    kickoff:
+        `${matchDate}T${matchTime}:00`,
+
+    venue: venue,
+
+    status: status,
+
+    home_score: homeScore,
+
+    away_score: awayScore,
+
+    home_penalty_score: null,
+
+    away_penalty_score: null
+
+};
+    console.log(
+        "DATA MATCH YANG DIKIRIM:",
+        data
+    );
 
 
-    const matchDate =
-        document.getElementById(
-            "match-date"
-        ).value;
+    /* =========================================
+       SIMPAN
+    ========================================= */
+
+    try {
+
+        if (editingMatchId) {
+
+            await databases.updateRow({
+
+                databaseId:
+                    APPWRITE_CONFIG.databaseId,
+
+                tableId:
+                    APPWRITE_CONFIG.matchesTableId,
+
+                rowId:
+                    editingMatchId,
+
+                data:
+                    data
+
+            });
 
 
-    const matchTime =
-        document.getElementById(
-            "match-time"
-        ).value;
+            showToast(
+                "Pertandingan berhasil diperbarui."
+            );
+
+        } else {
+
+            await databases.createRow({
+
+                databaseId:
+                    APPWRITE_CONFIG.databaseId,
+
+                tableId:
+                    APPWRITE_CONFIG.matchesTableId,
+
+                rowId:
+                    Appwrite.ID.unique(),
+
+                data:
+                    data
+
+            });
 
 
-    const venue =
-        document.getElementById(
-            "match-venue"
-        ).value.trim();
+            showToast(
+                "Pertandingan berhasil ditambahkan."
+            );
+        }
 
 
-    const status =
-        document.getElementById(
-            "match-status"
-        ).value;
+        /* =========================================
+           RESET
+        ========================================= */
+
+        closeMatchModal();
+
+        editingMatchId = null;
+
+        await loadMatches();
 
 
-    const homeValue =
-        document.getElementById(
-            "home-score"
-        ).value;
+    } catch (error) {
+
+        console.error(
+            "GAGAL MENYIMPAN MATCH:",
+            error
+        );
+
+        console.error(
+            "DATA YANG DIKIRIM:",
+            data
+        );
 
 
-    const awayValue =
-        document.getElementById(
-            "away-score"
-        ).value;
-
-
+        showToast(
+            "Gagal menyimpan pertandingan: " +
+            (
+                error.message ||
+                "Periksa konfigurasi Appwrite."
+            )
+        );
+    }
+}
     /* =====================================================
        VALIDASI
     ===================================================== */
