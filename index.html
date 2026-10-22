@@ -1615,21 +1615,19 @@ h3,
 <div class="card">
 
 <div class="section-title">
-
     <div>
         <h2>Pertandingan</h2>
         <p>Jadwal dan hasil pertandingan</p>
     </div>
 
     <button
-        id="add-match-button"
+        id="add-match-button-page"
         class="button button-primary"
         onclick="openMatchModal()"
         style="display:none"
     >
         + Input Pertandingan
     </button>
-
 </div>
 
 
@@ -3010,10 +3008,12 @@ async function loginAdmin(event) {
             "Login berhasil."
         );
 
-        const addMatchButton = document.getElementById("add-match-button");
+        const matchButtonPage = document.getElementById(
+    "add-match-button-page"
+);
 
-if (addMatchButton) {
-    addMatchButton.style.display = currentUser
+if (matchButtonPage) {
+    matchButtonPage.style.display = currentUser
         ? "inline-flex"
         : "none";
 }
@@ -3084,6 +3084,16 @@ function updateAdminUI() {
         document.getElementById(
             "add-club-button"
         );
+
+    const matchButton = document.getElementById(
+    "add-match-button-page"
+);
+
+if (matchButton) {
+    matchButton.style.display = currentUser
+        ? "inline-flex"
+        : "none";
+}
 
     const adminButton =
         document.querySelector(
