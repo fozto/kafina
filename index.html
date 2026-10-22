@@ -3010,6 +3010,14 @@ async function loginAdmin(event) {
             "Login berhasil."
         );
 
+        const addMatchButton = document.getElementById("add-match-button");
+
+if (addMatchButton) {
+    addMatchButton.style.display = currentUser
+        ? "inline-flex"
+        : "none";
+}
+
     } catch (error) {
 
         console.error(
@@ -3644,7 +3652,7 @@ let matches = [];
 
 // Buka modal input pertandingan
 function openMatchModal() {
-    if (!currentUser) {
+    if (!currentUser || !databases) {
         showToast("Silakan login sebagai admin.");
         return;
     }
@@ -3667,7 +3675,7 @@ function closeMatchModal() {
     editingMatchId = null;
 }
 
-// Isi pilihan klub berdasarkan grup
+// Isi dropdown klub sesuai grup
 function populateMatchClubOptions() {
     const group = document.getElementById("match-group").value;
     const homeSelect = document.getElementById("home-club");
@@ -3678,13 +3686,18 @@ function populateMatchClubOptions() {
     );
 
     function fillSelect(select, placeholder) {
-        select.innerHTML = `<option value="">${placeholder}</option>`;
+        select.replaceChildren();
+
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = placeholder;
+        select.appendChild(option);
 
         groupClubs.forEach(club => {
-            const option = document.createElement("option");
-            option.value = club.$id;
-            option.textContent = club.name;
-            select.appendChild(option);
+            const item = document.createElement("option");
+            item.value = club.$id;
+            item.textContent = club.name;
+            select.appendChild(item);
         });
     }
 
@@ -3692,12 +3705,13 @@ function populateMatchClubOptions() {
     fillSelect(awaySelect, "Pilih klub tandang");
 }
 
-// Ganti grup: perbarui daftar klub
-document.getElementById("match-group").addEventListener("change", () => {
-    populateMatchClubOptions();
-});
+// Perbarui pilihan klub saat grup berubah
+document.getElementById("match-group").addEventListener(
+    "change",
+    populateMatchClubOptions
+);
 
-// Simpan pertandingan ke Appwrite
+// Simpan pertandingan baru atau perubahan pertandingan
 async function saveMatch(event) {
     event.preventDefault();
 
@@ -3713,12 +3727,11 @@ async function saveMatch(event) {
     const matchTime = document.getElementById("match-time").value;
     const venue = document.getElementById("match-venue").value.trim();
     const status = document.getElementById("match-status").value;
-
-    const homeScoreValue = document.getElementById("home-score").value;
-    const awayScoreValue = document.getElementById("away-score").value;
+    const homeValue = document.getElementById("home-score").value;
+    const awayValue = document.getElementById("away-score").value;
 
     if (!homeClubId || !awayClubId) {
-        showToast("Pilih kedua klub terlebih dahulu.");
+        showToast("Pilih klub kandang dan tandang.");
         return;
     }
 
@@ -3736,13 +3749,13 @@ async function saveMatch(event) {
     let awayScore = null;
 
     if (status === "finished") {
-        if (homeScoreValue === "" || awayScoreValue === "") {
-            showToast("Masukkan kedua skor untuk pertandingan selesai.");
+        if (homeValue === "" || awayValue === "") {
+            showToast("Masukkan kedua skor pertandingan.");
             return;
         }
 
-        homeScore = Number(homeScoreValue);
-        awayScore = Number(awayScoreValue);
+        homeScore = Number(homeValue);
+        awayScore = Number(awayValue);
 
         if (
             !Number.isInteger(homeScore) ||
@@ -3750,7 +3763,7 @@ async function saveMatch(event) {
             homeScore < 0 ||
             awayScore < 0
         ) {
-            showToast("Skor harus berupa bilangan bulat non-negatif.");
+            showToast("Skor harus berupa bilangan bulat positif atau nol.");
             return;
         }
     }
@@ -3789,196 +3802,16 @@ async function saveMatch(event) {
         }
 
         closeMatchModal();
-        await loadMatches();
 
+        await loadMatches();
     } catch (error) {
         console.error("Gagal menyimpan pertandingan:", error);
-        showToast("Gagal menyimpan: " + (error.message || "Periksa konfigurasi Appwrite."));
-    }
-}
 
-// Ambil pertandingan dari Appwrite
-async function loadMatches() {
-    if (!databases) return;
-
-    try {
-        const result = await databases.listRows({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId: APPWRITE_CONFIG.matchesTableId
-        });
-
-        matches = result.rows || [];
-
-        matches.sort((a, b) =>
-            `${a.matchDate}T${a.matchTime}`.localeCompare(
-                `${b.matchDate}T${b.matchTime}`
-            )
+        showToast(
+            "Gagal menyimpan pertandingan: " +
+            (error.message || "Periksa konfigurasi Appwrite.")
         );
-
-        renderMatches();
-        renderLatestMatches();
-        renderMatchStandings();
-
-        const stat = document.getElementById("stat-matches");
-        if (stat) stat.textContent = matches.length;
-
-    } catch (error) {
-        console.error("Gagal memuat pertandingan:", error);
-        showToast("Gagal memuat pertandingan dari Appwrite.");
     }
-}
-
-// Tampilkan pertandingan di halaman Pertandingan
-function renderMatches() {
-    const container = document.getElementById("matches-container");
-    if (!container) return;
-
-    container.replaceChildren();
-
-    if (!matches.length) {
-        container.innerHTML =
-            '<div class="empty">Belum ada pertandingan.</div>';
-        return;
-    }
-
-    matches.forEach(match => {
-        const home = clubs.find(c => c.$id === match.homeClubId);
-        const away = clubs.find(c => c.$id === match.awayClubId);
-
-        const card = document.createElement("div");
-        card.className = "match";
-
-        const info = document.createElement("div");
-        info.className = "match-info";
-
-        const date = document.createElement("strong");
-        date.textContent = match.matchDate || "-";
-
-        const time = document.createElement("div");
-        time.textContent = match.matchTime || "-";
-
-        info.append(date, time);
-
-        const teams = document.createElement("div");
-        teams.className = "teams";
-
-        const homeTeam = document.createElement("div");
-        homeTeam.className = "team";
-
-        const homeName = document.createElement("span");
-        homeName.className = "team-name";
-        homeName.textContent = home?.name || "Klub dihapus";
-
-        homeTeam.append(homeName);
-
-        const score = document.createElement("div");
-        score.className = "score";
-
-        score.textContent = match.status === "finished"
-            ? `${match.homeScore} - ${match.awayScore}`
-            : "VS";
-
-        const scoreStatus = document.createElement("small");
-        scoreStatus.textContent = match.status === "finished"
-            ? "SELESAI"
-            : "TERJADWAL";
-
-        score.appendChild(scoreStatus);
-
-        const awayTeam = document.createElement("div");
-        awayTeam.className = "team";
-
-        const awayName = document.createElement("span");
-        awayName.className = "team-name";
-        awayName.textContent = away?.name || "Klub dihapus";
-
-        awayTeam.append(awayName);
-
-        teams.append(homeTeam, score, awayTeam);
-
-        const venue = document.createElement("div");
-        venue.className = "venue";
-        venue.textContent = `${match.venue || "-"} · Grup ${match.group_name || "-"}`;
-
-        card.append(info, teams, venue);
-
-        if (currentUser) {
-            const actions = document.createElement("div");
-            actions.className = "club-actions";
-
-            const editButton = document.createElement("button");
-            editButton.className = "btn-edit";
-            editButton.textContent = "Edit";
-            editButton.onclick = () => editMatch(match.$id);
-
-            const deleteButton = document.createElement("button");
-            deleteButton.className = "btn-delete";
-            deleteButton.textContent = "Hapus";
-            deleteButton.onclick = () => deleteMatch(match.$id);
-
-            actions.append(editButton, deleteButton);
-            card.appendChild(actions);
-        }
-
-        container.appendChild(card);
-    });
-}
-
-// Tampilkan hasil terbaru di Beranda
-function renderLatestMatches() {
-    const container = document.getElementById("latest-matches");
-    if (!container) return;
-
-    container.replaceChildren();
-
-    const latest = matches
-        .filter(match => match.status === "finished")
-        .slice()
-        .reverse()
-        .slice(0, 5);
-
-    if (!latest.length) {
-        container.innerHTML =
-            '<div class="empty">Belum ada hasil pertandingan.</div>';
-        return;
-    }
-
-    latest.forEach(match => {
-        const home = clubs.find(c => c.$id === match.homeClubId);
-        const away = clubs.find(c => c.$id === match.awayClubId);
-
-        const row = document.createElement("div");
-        row.className = "match";
-
-        const info = document.createElement("div");
-        info.className = "match-info";
-        info.textContent = match.matchDate || "-";
-
-        const teams = document.createElement("div");
-        teams.className = "teams";
-
-        const homeName = document.createElement("div");
-        homeName.className = "team-name";
-        homeName.textContent = home?.name || "Klub dihapus";
-
-        const score = document.createElement("div");
-        score.className = "score";
-        score.textContent = `${match.homeScore} - ${match.awayScore}`;
-
-        const awayName = document.createElement("div");
-        awayName.className = "team-name";
-        awayName.style.textAlign = "right";
-        awayName.textContent = away?.name || "Klub dihapus";
-
-        teams.append(homeName, score, awayName);
-
-        const venue = document.createElement("div");
-        venue.className = "venue";
-        venue.textContent = match.venue || "-";
-
-        row.append(info, teams, venue);
-        container.appendChild(row);
-    });
 }
 
 // Edit pertandingan
@@ -3988,11 +3821,16 @@ function editMatch(matchId) {
         return;
     }
 
-    const match = matches.find(m => m.$id === matchId);
-    if (!match) return;
+    const match = matches.find(item => item.$id === matchId);
+
+    if (!match) {
+        showToast("Pertandingan tidak ditemukan.");
+        return;
+    }
 
     editingMatchId = matchId;
 
+    document.getElementById("match-form").reset();
     document.getElementById("match-modal-title").textContent =
         "Edit Pertandingan";
 
@@ -4001,14 +3839,29 @@ function editMatch(matchId) {
 
     populateMatchClubOptions();
 
-    document.getElementById("home-club").value = match.homeClubId;
-    document.getElementById("away-club").value = match.awayClubId;
-    document.getElementById("match-date").value = match.matchDate || "";
-    document.getElementById("match-time").value = match.matchTime || "";
-    document.getElementById("match-venue").value = match.venue || "";
-    document.getElementById("match-status").value = match.status || "scheduled";
-    document.getElementById("home-score").value = match.homeScore ?? "";
-    document.getElementById("away-score").value = match.awayScore ?? "";
+    document.getElementById("home-club").value =
+        match.homeClubId || "";
+
+    document.getElementById("away-club").value =
+        match.awayClubId || "";
+
+    document.getElementById("match-date").value =
+        match.matchDate || "";
+
+    document.getElementById("match-time").value =
+        match.matchTime || "";
+
+    document.getElementById("match-venue").value =
+        match.venue || "";
+
+    document.getElementById("match-status").value =
+        match.status || "scheduled";
+
+    document.getElementById("home-score").value =
+        match.homeScore ?? "";
+
+    document.getElementById("away-score").value =
+        match.awayScore ?? "";
 
     document.getElementById("match-modal").classList.add("show");
 }
@@ -4020,10 +3873,16 @@ async function deleteMatch(matchId) {
         return;
     }
 
-    const match = matches.find(m => m.$id === matchId);
-    if (!match) return;
+    const match = matches.find(item => item.$id === matchId);
 
-    if (!confirm("Hapus pertandingan ini?")) return;
+    if (!match) {
+        showToast("Pertandingan tidak ditemukan.");
+        return;
+    }
+
+    if (!confirm("Yakin ingin menghapus pertandingan ini?")) {
+        return;
+    }
 
     try {
         await databases.deleteRow({
@@ -4033,11 +3892,15 @@ async function deleteMatch(matchId) {
         });
 
         showToast("Pertandingan berhasil dihapus.");
-        await loadMatches();
 
+        await loadMatches();
     } catch (error) {
-        console.error(error);
-        showToast("Gagal menghapus pertandingan.");
+        console.error("Gagal menghapus pertandingan:", error);
+
+        showToast(
+            "Gagal menghapus pertandingan: " +
+            (error.message || "Periksa izin Appwrite.")
+        );
     }
 }
 
@@ -4109,7 +3972,7 @@ function calculateStandings(
 
             name: club.name,
 
-            group: club.group,
+            group: club.group_name || club.group || "A",
 
             played: 0,
 
@@ -4354,7 +4217,12 @@ function editClub(clubId) {
         title.textContent = "Edit Klub";
     }
 
-    openClubModal();
+    if (!currentUser) {
+    showToast("Silakan login sebagai admin.");
+    return;
+}
+
+document.getElementById("club-modal").classList.add("show");
 }
 
 async function deleteClub(clubId) {
@@ -4384,21 +4252,18 @@ async function deleteClub(clubId) {
             rowId: clubId
         });
 
-        if (club.logoFileId) {
-            try {
-                await storage.deleteFile({
-                    bucketId:
-                        APPWRITE_CONFIG.storageBucketId,
-                    fileId: club.logoFileId
-                });
-            } catch (error) {
-                console.warn(
-                    "Logo klub gagal dihapus:",
-                    error
-                );
-            }
-        }
+        const logoFileId = club.logo_file_id;
 
+if (logoFileId && storage) {
+    try {
+        await storage.deleteFile({
+            bucketId: APPWRITE_CONFIG.storageBucketId,
+            fileId: logoFileId
+        });
+    } catch (error) {
+        console.warn("Logo klub gagal dihapus:", error);
+    }
+}
         showToast("Klub berhasil dihapus.");
 
         await loadClubs();
