@@ -3579,7 +3579,7 @@ async function saveMatch(event) {
     const matchDate = document.getElementById("match-date").value;
     const matchTime = document.getElementById("match-time").value;
     const venue = document.getElementById("match-venue").value.trim();
-    const status = document.getElementById("match-status").value;
+    let status = document.getElementById("match-status").value;
     const homeValue = document.getElementById("home-score").value;
     const awayValue = document.getElementById("away-score").value;
 
@@ -3641,9 +3641,22 @@ async function saveMatch(event) {
     /* ---------- SKOR ---------- */
 
     let homeScore = null;
-    let awayScore = null;
+let awayScore = null;
 
-    if (status === "finished") {
+const hasHomeValue = homeValue !== "";
+const hasAwayValue = awayValue !== "";
+
+if (hasHomeValue !== hasAwayValue) {
+    showToast("Isi skor kedua klub, atau kosongkan keduanya.");
+    return;
+}
+
+/* Kalau skor diisi, pertandingan otomatis dianggap selesai */
+if (hasHomeValue && hasAwayValue) {
+    status = "finished";
+}
+
+if (status === "finished") {
 
         if (homeValue === "" || awayValue === "") {
             showToast(
