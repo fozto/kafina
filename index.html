@@ -3764,18 +3764,19 @@ if (status === "finished") {
     }
 }
 
+
 const data = {
     Stage: "Group Stage",
     group_name: group,
-    homeClubId,
-    awayClubId,
-    matchDate,
-    matchTime,
-    venue,
-    status,
-    homeScore,
-    awayScore
+    home_club_id: homeClubId,
+    away_club_id: awayClubId,
+    kickoff: `${matchDate}T${matchTime}:00`,
+    venue: venue,
+    status: status,
+    home_score: homeScore,
+    away_score: awayScore
 };
+
 
 
     try {
