@@ -2684,73 +2684,137 @@ SIMPAN KLUB
 ========================================================= -->
 
 <script src="https://cdn.jsdelivr.net/npm/appwrite@29.0.0"></script>
-
-<script>
+/* =========================================================
+   KAFINA CUP - JAVASCRIPT FINAL
+   Tempel di dalam <script> ... </script>
+   SETELAH baris:
+   <script src="https://cdn.jsdelivr.net/npm/appwrite@29.0.0"></script>
+========================================================= */
 
 /* =========================================================
    APPWRITE CONFIGURATION
 ========================================================= */
 
 const APPWRITE_CONFIG = {
-
-    endpoint:
-        "https://sgp.cloud.appwrite.io/v1",
-
-    projectId:
-        "6ad54ca7000423d99123",
-
-    databaseId:
-        "6ad54d8500067ae2e9f2",
-
-    clubsTableId:
-        "clubs",
-
-    matchesTableId:
-        "matches",
-
-    eventsTableId:
-        "match_events",
-
-    rulesTableId:
-        "rules",
-
-    /*
-        BUAT BUCKET STORAGE DI APPWRITE
-        UNTUK MENYIMPAN LOGO KLUB.
-
-        Contoh ID:
-        club-logos
-    */
-
-    storageBucketId:
-        "club-logos"
-
+    endpoint: "https://sgp.cloud.appwrite.io/v1",
+    projectId: "6ad54ca7000423d99123",
+    databaseId: "6ad54d8500067ae2e9f2",
+    clubsTableId: "clubs",
+    matchesTableId: "matches",
+    eventsTableId: "match_events",
+    rulesTableId: "rules",
+    storageBucketId: "club-logos"
 };
+
+/*
+    Nama kolom "Stage" di tabel matches.
+    Kalau di Appwrite namanya "stage" (huruf kecil),
+    ubah nilai ini menjadi "stage".
+*/
+const MATCH_STAGE_FIELD = "Stage";
 
 
 /* =========================================================
-   APPWRITE OBJECTS
+   STATE
 ========================================================= */
 
 let client = null;
-
 let account = null;
-
 let databases = null;
-
 let storage = null;
-
-
-/* =========================================================
-   CURRENT USER
-========================================================= */
 
 let currentUser = null;
 
 let clubs = [];
+let matches = [];
+
 let editingClubId = null;
-let editingOldLogoId = null;
-let editingOldLogoUrl = null;
+let editingOldLogoUrl = "";
+
+let editingMatchId = null;
+
+let loginInProgress = false;
+let savingClub = false;
+let savingMatch = false;
+
+let toastTimer = null;
+
+
+/* =========================================================
+   UTILITIES
+========================================================= */
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+function getClubGroup(club) {
+    return club.group_name || club.group || "A";
+}
+
+function getClubById(clubId) {
+    return clubs.find(club => club.$id === clubId);
+}
+
+/* Ambil ID file Storage dari URL logo */
+function extractFileId(url) {
+    if (!url) return null;
+
+    const marker = `/buckets/${APPWRITE_CONFIG.storageBucketId}/files/`;
+    const text = String(url);
+
+    if (!text.includes(marker)) return null;
+
+    const match = text.match(/\/files\/([^/?]+)\/view/);
+
+    return match ? match[1] : null;
+}
+
+function buildLogoUrl(fileId) {
+    return `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.storageBucketId}/files/${fileId}/view?project=${APPWRITE_CONFIG.projectId}`;
+}
+
+async function deleteLogoFile(fileId) {
+    if (!fileId || !storage) return;
+
+    try {
+        await storage.deleteFile({
+            bucketId: APPWRITE_CONFIG.storageBucketId,
+            fileId: fileId
+        });
+    } catch (error) {
+        console.warn("Logo gagal dihapus:", error);
+    }
+}
+
+async function listAllRows(tableId) {
+    const result = await databases.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: tableId,
+        queries: [Appwrite.Query.limit(500)]
+    });
+
+    return result.rows || [];
+}
 
 
 /* =========================================================
@@ -2759,65 +2823,30 @@ let editingOldLogoUrl = null;
 
 function initializeAppwrite() {
 
-    if (
-        APPWRITE_CONFIG.projectId ===
-        "MASUKKAN_PROJECT_ID"
-    ) {
-
-        console.warn(
-            "Appwrite belum dikonfigurasi."
-        );
-
+    if (APPWRITE_CONFIG.projectId === "MASUKKAN_PROJECT_ID") {
+        console.warn("Appwrite belum dikonfigurasi.");
         return false;
     }
 
-
     try {
 
-        client =
-            new Appwrite.Client();
-
+        client = new Appwrite.Client();
 
         client
-            .setEndpoint(
-                APPWRITE_CONFIG.endpoint
-            )
-            .setProject(
-                APPWRITE_CONFIG.projectId
-            );
+            .setEndpoint(APPWRITE_CONFIG.endpoint)
+            .setProject(APPWRITE_CONFIG.projectId);
 
+        account = new Appwrite.Account(client);
+        databases = new Appwrite.TablesDB(client);
+        storage = new Appwrite.Storage(client);
 
-        account =
-            new Appwrite.Account(
-                client
-            );
-
-
-        databases =
-            new Appwrite.TablesDB(
-                client
-            );
-
-
-        storage =
-            new Appwrite.Storage(
-                client
-            );
-
-
-        console.log(
-            "Appwrite berhasil terhubung."
-        );
-
+        console.log("Appwrite berhasil terhubung.");
 
         return true;
 
     } catch (error) {
 
-        console.error(
-            "Appwrite error:",
-            error
-        );
+        console.error("Appwrite error:", error);
 
         return false;
     }
@@ -2828,120 +2857,45 @@ function initializeAppwrite() {
    NAVIGATION
 ========================================================= */
 
-function showPage(
-    pageName,
-    button
-) {
+function showPage(pageName, button) {
 
-    document
-        .querySelectorAll(".page")
-        .forEach(page => {
+    document.querySelectorAll(".page").forEach(page => {
+        page.classList.remove("active");
+    });
 
-            page.classList.remove(
-                "active"
-            );
-
-        });
-
-
-    const target =
-        document.getElementById(
-            "page-" + pageName
-        );
-
+    const target = document.getElementById("page-" + pageName);
 
     if (target) {
-
-        target.classList.add(
-            "active"
-        );
+        target.classList.add("active");
     }
 
-
-    document
-        .querySelectorAll(".nav-button")
-        .forEach(btn => {
-
-            btn.classList.remove(
-                "active"
-            );
-
-        });
-
+    document.querySelectorAll(".nav-button").forEach(btn => {
+        btn.classList.remove("active");
+    });
 
     if (button) {
-
-        button.classList.add(
-            "active"
-        );
+        button.classList.add("active");
     }
 }
 
 
 /* =========================================================
-   TOAST
-========================================================= */
-
-function showToast(message) {
-
-    const toast =
-        document.getElementById(
-            "toast"
-        );
-
-
-    toast.textContent =
-        message;
-
-
-    toast.classList.add(
-        "show"
-    );
-
-
-    setTimeout(() => {
-
-        toast.classList.remove(
-            "show"
-        );
-
-    }, 3000);
-}
-
-
-/* =========================================================
-   ADMIN LOGIN
+   ADMIN LOGIN / LOGOUT
 ========================================================= */
 
 function openAdminLogin() {
-
-    document
-        .getElementById(
-            "admin-modal"
-        )
-        .classList.add("show");
+    document.getElementById("admin-modal").classList.add("show");
 }
-
 
 function closeAdminLogin() {
-
-    document
-        .getElementById(
-            "admin-modal"
-        )
-        .classList.remove("show");
+    document.getElementById("admin-modal").classList.remove("show");
 }
-
-
-let loginInProgress = false;
 
 async function loginAdmin(event) {
 
     event.preventDefault();
 
-    if (loginInProgress) {
-        return;
-    }
+    if (loginInProgress) return;
 
     loginInProgress = true;
 
@@ -2952,78 +2906,29 @@ async function loginAdmin(event) {
             return;
         }
 
-        const email =
-            document
-                .getElementById("admin-email")
-                .value
-                .trim();
-
-        const password =
-            document
-                .getElementById("admin-password")
-                .value;
+        const email = document.getElementById("admin-email").value.trim();
+        const password = document.getElementById("admin-password").value;
 
         if (!email || !password) {
-            showToast(
-                "Email dan password wajib diisi."
-            );
+            showToast("Email dan password wajib diisi.");
             return;
         }
 
-        console.log(
-            "LOGIN DIMULAI:",
-            email
-        );
+        await account.createEmailPasswordSession(email, password);
 
-        const session =
-            await account.createEmailPasswordSession(
-                email,
-                password
-            );
-
-        console.log(
-            "SESSION BERHASIL:",
-            session
-        );
-
-        currentUser =
-            await account.get();
-
-        console.log(
-            "USER BERHASIL:",
-            currentUser
-        );
+        currentUser = await account.get();
 
         closeAdminLogin();
 
+        document.getElementById("admin-password").value = "";
+
         updateAdminUI();
 
-        await loadClubs();
-
-        document.getElementById(
-            "admin-password"
-        ).value = "";
-
-        showToast(
-            "Login berhasil."
-        );
-
-        const matchButtonPage = document.getElementById(
-    "add-match-button-page"
-);
-
-if (matchButtonPage) {
-    matchButtonPage.style.display = currentUser
-        ? "inline-flex"
-        : "none";
-}
+        showToast("Login berhasil.");
 
     } catch (error) {
 
-        console.error(
-            "LOGIN ERROR:",
-            error
-        );
+        console.error("LOGIN ERROR:", error);
 
         currentUser = null;
 
@@ -3031,10 +2936,7 @@ if (matchButtonPage) {
 
         showToast(
             "Login gagal: " +
-            (
-                error.message ||
-                "Terjadi kesalahan."
-            )
+            (error.message || "Terjadi kesalahan.")
         );
 
     } finally {
@@ -3043,230 +2945,144 @@ if (matchButtonPage) {
     }
 }
 
-
-/* =========================================================
-   CHECK SESSION
-========================================================= */
-
 async function checkAdminSession() {
 
-    if (!account) {
-        return;
-    }
-
+    if (!account) return;
 
     try {
-
-        currentUser =
-            await account.get();
-
-
-        updateAdminUI();
-
-
-        console.log(
-            "Admin aktif:",
-            currentUser
-        );
-
-
+        currentUser = await account.get();
     } catch {
-
         currentUser = null;
-
-        updateAdminUI();
     }
+
+    updateAdminUI();
 }
-
-function updateAdminUI() {
-
-    const addButton =
-        document.getElementById(
-            "add-club-button"
-        );
-
-    const matchButton = document.getElementById(
-    "add-match-button-page"
-);
-
-if (matchButton) {
-    matchButton.style.display = currentUser
-        ? "inline-flex"
-        : "none";
-}
-
-    const adminButton =
-        document.querySelector(
-            ".admin-button"
-        );
-
-    if (currentUser) {
-
-        if (addButton) {
-            addButton.style.display =
-                "inline-flex";
-        }
-
-        if (adminButton) {
-            adminButton.textContent =
-                "LOGOUT";
-
-            adminButton.onclick =
-                logoutAdmin;
-        }
-
-    } else {
-
-        if (addButton) {
-            addButton.style.display =
-                "none";
-        }
-
-        if (adminButton) {
-            adminButton.textContent =
-                "ADMIN";
-
-            adminButton.onclick =
-                openAdminLogin;
-        }
-    }
-}
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
 
 async function logoutAdmin() {
 
-    if (!account) {
-        return;
-    }
+    if (!account) return;
 
     try {
-
-        console.log("Logout...");
 
         await account.deleteSession("current");
 
         currentUser = null;
 
+        closeClubModal();
+        closeMatchModal();
+
         updateAdminUI();
 
         showToast("Logout berhasil.");
 
-        console.log("Session berhasil dihapus.");
-
     } catch (error) {
 
-        console.error(
-            "LOGOUT ERROR:",
-            error
-        );
+        console.error("LOGOUT ERROR:", error);
 
         showToast(
             "Gagal logout: " +
-            (
-                error.message ||
-                "Terjadi kesalahan."
-            )
+            (error.message || "Terjadi kesalahan.")
         );
     }
 }
+
+function updateAdminUI() {
+
+    const addClubButton = document.getElementById("add-club-button");
+    const addMatchButton = document.getElementById("add-match-button-page");
+    const adminButton = document.querySelector(".admin-button");
+
+    const display = currentUser ? "inline-flex" : "none";
+
+    if (addClubButton) addClubButton.style.display = display;
+    if (addMatchButton) addMatchButton.style.display = display;
+
+    if (adminButton) {
+        if (currentUser) {
+            adminButton.textContent = "LOGOUT";
+            adminButton.onclick = logoutAdmin;
+        } else {
+            adminButton.textContent = "ADMIN";
+            adminButton.onclick = openAdminLogin;
+        }
+    }
+
+    /* Render ulang supaya tombol Edit/Hapus ikut muncul/hilang */
+    renderClubs();
+    renderMatches();
+}
+
 
 /* =========================================================
    CLUB MODAL
 ========================================================= */
 
+function resetClubForm() {
+
+    editingClubId = null;
+    editingOldLogoUrl = "";
+
+    document.getElementById("club-name").value = "";
+    document.getElementById("club-group").value = "A";
+    document.getElementById("club-logo-file").value = "";
+    document.getElementById("logo-preview").textContent = "⚽";
+    document.getElementById("club-modal-title").textContent = "Tambah Klub";
+}
+
+function setLogoPreview(url) {
+
+    const preview = document.getElementById("logo-preview");
+
+    preview.replaceChildren();
+
+    if (!url) {
+        preview.textContent = "⚽";
+        return;
+    }
+
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "Preview Logo";
+
+    img.onerror = () => {
+        preview.textContent = "⚽";
+    };
+
+    preview.appendChild(img);
+}
+
 function openClubModal() {
 
     if (!currentUser) {
-
-        showToast(
-            "Silakan login sebagai admin."
-        );
-
+        showToast("Silakan login sebagai admin.");
         return;
     }
 
+    resetClubForm();
 
-    document
-        .getElementById(
-            "club-modal"
-        )
-        .classList.add("show");
+    document.getElementById("club-modal").classList.add("show");
 }
-
 
 function closeClubModal() {
 
-    document
-        .getElementById(
-            "club-modal"
-        )
-        .classList.remove("show");
+    document.getElementById("club-modal").classList.remove("show");
 
-
-    document
-        .getElementById(
-            "club-name"
-        )
-        .value = "";
-
-
-    document
-        .getElementById(
-            "club-logo-file"
-        )
-        .value = "";
-
-
-    document
-        .getElementById(
-            "logo-preview"
-        )
-        .innerHTML = "⚽";
+    resetClubForm();
 }
-
-
-/* =========================================================
-   LOGO PREVIEW
-========================================================= */
 
 function previewClubLogo(event) {
 
-    const file =
-        event.target.files[0];
+    const file = event.target.files[0];
 
+    if (!file) return;
 
-    if (!file) {
-        return;
-    }
-
-
-    /*
-        Batas keamanan frontend.
-
-        Nanti server/database permission
-        tetap harus membatasi upload.
-    */
-
-    const maxSize =
-        5 * 1024 * 1024;
-
+    const maxSize = 5 * 1024 * 1024;
 
     if (file.size > maxSize) {
-
-        showToast(
-            "Ukuran logo maksimal 5 MB."
-        );
-
-
+        showToast("Ukuran logo maksimal 5 MB.");
         event.target.value = "";
-
         return;
     }
-
 
     const allowedTypes = [
         "image/png",
@@ -3275,602 +3091,499 @@ function previewClubLogo(event) {
         "image/svg+xml"
     ];
 
-
-    if (
-        !allowedTypes.includes(
-            file.type
-        )
-    ) {
-
-        showToast(
-            "Format gambar tidak didukung."
-        );
-
-
+    if (!allowedTypes.includes(file.type)) {
+        showToast("Format gambar tidak didukung.");
         event.target.value = "";
-
         return;
     }
 
+    const reader = new FileReader();
 
-    const reader =
-        new FileReader();
-
-
-    reader.onload = function(e) {
-
-        document
-            .getElementById(
-                "logo-preview"
-            )
-            .innerHTML = `
-                <img
-                    src="${e.target.result}"
-                    alt="Preview Logo"
-                >
-            `;
+    reader.onload = function (e) {
+        setLogoPreview(e.target.result);
     };
-
 
     reader.readAsDataURL(file);
 }
 
-
-/* =========================================================
-   UPLOAD LOGO TO APPWRITE STORAGE
-========================================================= */
-
 async function uploadClubLogo(file) {
 
     if (!storage) {
-
-        throw new Error(
-            "Appwrite Storage belum terhubung."
-        );
+        throw new Error("Appwrite Storage belum terhubung.");
     }
 
-
-    /*
-        Appwrite membutuhkan file ID unik.
-
-        ID unik dibuat menggunakan:
-        Appwrite.ID.unique()
-    */
-
-    const fileId =
-        Appwrite.ID.unique();
-
-
-    const uploadedFile =
-        await storage.createFile(
-            APPWRITE_CONFIG.storageBucketId,
-            fileId,
-            file
-        );
-
-
-    return uploadedFile;
+    return await storage.createFile({
+        bucketId: APPWRITE_CONFIG.storageBucketId,
+        fileId: Appwrite.ID.unique(),
+        file: file
+    });
 }
+
+
+/* =========================================================
+   SAVE CLUB
+========================================================= */
 
 async function saveClub(event) {
 
     event.preventDefault();
 
-    if (!account || !currentUser) {
+    if (savingClub) return;
+
+    if (!account || !currentUser || !databases) {
         showToast("Silakan login sebagai admin.");
         return;
     }
 
-    const name =
-        document
-            .getElementById("club-name")
-            .value
-            .trim();
-
-    const group =
-        document
-            .getElementById("club-group")
-            .value;
-
-    const fileInput =
-        document.getElementById(
-            "club-logo-file"
-        );
-
-    const file =
-        fileInput?.files?.[0] || null;
-
+    const name = document.getElementById("club-name").value.trim();
+    const group = document.getElementById("club-group").value;
+    const file = document.getElementById("club-logo-file").files?.[0] || null;
 
     if (!name) {
         showToast("Nama klub wajib diisi.");
         return;
     }
 
+    const duplicate = clubs.some(club =>
+        club.$id !== editingClubId &&
+        String(club.name || "").trim().toLowerCase() === name.toLowerCase()
+    );
+
+    if (duplicate) {
+        showToast("Nama klub sudah dipakai.");
+        return;
+    }
+
+    /* Klub yang sudah punya pertandingan tidak boleh pindah grup */
+    if (editingClubId) {
+
+        const oldClub = getClubById(editingClubId);
+
+        if (oldClub && getClubGroup(oldClub) !== group) {
+
+            const hasMatches = matches.some(match =>
+                match.home_club_id === editingClubId ||
+                match.away_club_id === editingClubId
+            );
+
+            if (hasMatches) {
+                showToast(
+                    "Klub sudah punya pertandingan, tidak bisa pindah grup. Hapus pertandingannya dulu."
+                );
+                return;
+            }
+        }
+    }
+
+    savingClub = true;
+
+    let newFileId = null;
 
     try {
 
-        /*
-         * ==========================================
-         * LOGO
-         * ==========================================
-         */
-
-        let logoUrl =
-            editingOldLogoUrl || "";
-
+        let logoUrl = editingOldLogoUrl || "";
 
         if (file) {
 
-            showToast(
-                "Mengupload logo..."
-            );
+            showToast("Mengupload logo...");
 
+            const uploadedFile = await uploadClubLogo(file);
 
-            const uploadedFile =
-                await uploadClubLogo(file);
+            newFileId = uploadedFile.$id;
 
+            logoUrl = buildLogoUrl(newFileId);
+        }
 
-            const fileId =
-                uploadedFile.$id;
+        const data = {
+            name: name,
+            group_name: group,
+            logo_url: logoUrl
+        };
 
+        try {
 
-            /*
-             * URL untuk menampilkan logo
-             */
+            if (editingClubId) {
 
-            logoUrl =
-                `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.storageBucketId}/files/${fileId}/view?project=${APPWRITE_CONFIG.projectId}`;
+                await databases.updateRow({
+                    databaseId: APPWRITE_CONFIG.databaseId,
+                    tableId: APPWRITE_CONFIG.clubsTableId,
+                    rowId: editingClubId,
+                    data: data
+                });
 
+            } else {
 
-            /*
-             * Kalau sedang edit dan ada logo lama,
-             * hapus logo lama setelah upload baru berhasil.
-             */
-
-            if (
-                editingOldLogoId &&
-                editingOldLogoId !== fileId
-            ) {
-
-                try {
-
-                    await storage.deleteFile({
-                        bucketId:
-                            APPWRITE_CONFIG.storageBucketId,
-
-                        fileId:
-                            editingOldLogoId
-                    });
-
-                } catch (error) {
-
-                    console.warn(
-                        "Logo lama gagal dihapus:",
-                        error
-                    );
-                }
+                await databases.createRow({
+                    databaseId: APPWRITE_CONFIG.databaseId,
+                    tableId: APPWRITE_CONFIG.clubsTableId,
+                    rowId: Appwrite.ID.unique(),
+                    data: data
+                });
             }
 
+        } catch (dbError) {
 
-            /*
-             * Simpan ID logo lama untuk
-             * kebutuhan edit berikutnya.
-             */
+            /* Database gagal: hapus logo baru supaya tidak jadi sampah */
+            if (newFileId) {
+                await deleteLogoFile(newFileId);
+            }
 
-            editingOldLogoId =
-                fileId;
+            throw dbError;
         }
 
+        /* Hapus logo lama setelah database berhasil diperbarui */
+        if (newFileId && editingOldLogoUrl) {
 
-        /*
-         * ==========================================
-         * EDIT CLUB
-         * ==========================================
-         */
+            const oldFileId = extractFileId(editingOldLogoUrl);
 
-        if (editingClubId) {
-
-            await databases.updateRow({
-
-                databaseId:
-                    APPWRITE_CONFIG.databaseId,
-
-                tableId:
-                    APPWRITE_CONFIG.clubsTableId,
-
-                rowId:
-                    editingClubId,
-
-                data: {
-
-                    name:
-                        name,
-
-                    group_name:
-                        group,
-
-                    logo_url:
-                        logoUrl
-                }
-            });
-
-
-            showToast(
-                "Klub berhasil diperbarui."
-            );
-
-
+            if (oldFileId && oldFileId !== newFileId) {
+                await deleteLogoFile(oldFileId);
+            }
         }
 
-
-        /*
-         * ==========================================
-         * TAMBAH CLUB
-         * ==========================================
-         */
-
-        else {
-
-            await databases.createRow({
-
-                databaseId:
-                    APPWRITE_CONFIG.databaseId,
-
-                tableId:
-                    APPWRITE_CONFIG.clubsTableId,
-
-                rowId:
-                    Appwrite.ID.unique(),
-
-                data: {
-
-                    name:
-                        name,
-
-                    group_name:
-                        group,
-
-                    logo_url:
-                        logoUrl
-                }
-            });
-
-
-            showToast(
-                "Klub berhasil ditambahkan."
-            );
-        }
-
-
-        /*
-         * ==========================================
-         * RESET
-         * ==========================================
-         */
-
-        editingClubId = null;
-
-        editingOldLogoId = null;
-
-        editingOldLogoUrl = null;
-
+        showToast(
+            editingClubId
+                ? "Klub berhasil diperbarui."
+                : "Klub berhasil ditambahkan."
+        );
 
         closeClubModal();
 
-
-        document
-            .getElementById(
-                "club-form"
-            )
-            ?.reset();
-
-
         await loadClubs();
-
 
     } catch (error) {
 
-        console.error(
-            "Gagal menyimpan klub:",
-            error
-        );
-
+        console.error("Gagal menyimpan klub:", error);
 
         showToast(
             "Gagal menyimpan klub: " +
-            (
-                error.message ||
-                "Unknown error"
-            )
+            (error.message || "Unknown error")
         );
+
+    } finally {
+
+        savingClub = false;
     }
 }
 
+
 /* =========================================================
-   LOAD CLUBS
+   LOAD & RENDER CLUBS
 ========================================================= */
+
 async function loadClubs() {
 
     if (!databases) return;
 
     try {
 
-        const result = await databases.listRows({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId: APPWRITE_CONFIG.clubsTableId
-        });
+        clubs = await listAllRows(APPWRITE_CONFIG.clubsTableId);
 
-        clubs = result.rows;
-
-        renderClubs(clubs);
-
+        renderClubs();
         updateStatsFromDatabase(clubs);
+
+        /* Nama & logo klub dipakai di pertandingan dan klasemen */
+        renderMatches();
+        renderMatchStandings();
 
     } catch (error) {
 
-        console.error(
-            "Gagal mengambil klub:",
-            error
-        );
+        console.error("Gagal mengambil klub:", error);
+
+        showToast("Gagal memuat klub.");
     }
-}/* =========================================================
-   RENDER CLUBS
-========================================================= */
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
-
-function escapeHtml(value) {
-
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
 }
 
+function renderClubs() {
 
-/* =========================================================
-   UPDATE STATS
-========================================================= */
+    const container = document.getElementById("clubs-container");
 
-function updateStatsFromDatabase(
-    clubs
-) {
+    if (!container) return;
 
-    const element =
-        document.getElementById(
-            "stat-clubs"
-        );
+    container.replaceChildren();
 
+    if (!clubs.length) {
+
+        /* Sebelum data termuat, biarkan kosong dengan pesan */
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.style.gridColumn = "1 / -1";
+        empty.innerHTML = `
+            <div class="empty-icon">⚽</div>
+            Belum ada klub.
+        `;
+
+        container.appendChild(empty);
+
+        return;
+    }
+
+    const sortedClubs = [...clubs].sort((a, b) => {
+
+        const groupCompare = getClubGroup(a).localeCompare(getClubGroup(b));
+
+        if (groupCompare !== 0) return groupCompare;
+
+        return String(a.name || "").localeCompare(String(b.name || ""));
+    });
+
+    sortedClubs.forEach(club => {
+
+        const logoUrl = club.logo_url || "";
+        const id = escapeHtml(club.$id);
+
+        const card = document.createElement("div");
+        card.className = "club-card";
+
+        card.innerHTML = `
+            <div class="club-logo">
+                ${
+                    logoUrl
+                        ? `<img src="${escapeHtml(logoUrl)}"
+                               alt="${escapeHtml(club.name || "Logo klub")}"
+                               onerror="this.replaceWith(document.createTextNode('⚽'))">`
+                        : "⚽"
+                }
+            </div>
+
+            <div class="club-info">
+
+                <h3>${escapeHtml(club.name || "Tanpa nama")}</h3>
+
+                <p>Grup ${escapeHtml(getClubGroup(club))}</p>
+
+                ${
+                    currentUser
+                        ? `
+                            <div class="club-actions">
+                                <button type="button"
+                                    class="btn-edit"
+                                    onclick="editClub('${id}')">
+                                    Edit
+                                </button>
+
+                                <button type="button"
+                                    class="btn-delete"
+                                    onclick="deleteClub('${id}')">
+                                    Hapus
+                                </button>
+                            </div>
+                        `
+                        : ""
+                }
+
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+function updateStatsFromDatabase(clubList) {
+
+    const element = document.getElementById("stat-clubs");
 
     if (element) {
-
-        element.textContent =
-            clubs.length;
+        element.textContent = clubList.length;
     }
 }
 
-/* =========================================
-   INPUT PERTANDINGAN KAFINA CUP
-========================================= */
 
-let editingMatchId = null;
-let matches = [];
+/* =========================================================
+   EDIT & DELETE CLUB
+========================================================= */
+
+function editClub(clubId) {
+
+    if (!currentUser) {
+        showToast("Silakan login sebagai admin.");
+        return;
+    }
+
+    const club = getClubById(clubId);
+
+    if (!club) {
+        showToast("Klub tidak ditemukan.");
+        return;
+    }
+
+    resetClubForm();
+
+    editingClubId = club.$id;
+    editingOldLogoUrl = club.logo_url || "";
+
+    document.getElementById("club-name").value = club.name || "";
+    document.getElementById("club-group").value = getClubGroup(club);
+    document.getElementById("club-modal-title").textContent = "Edit Klub";
+
+    setLogoPreview(editingOldLogoUrl);
+
+    document.getElementById("club-modal").classList.add("show");
+}
+
+async function deleteClub(clubId) {
+
+    if (!account || !currentUser || !databases) {
+        showToast("Silakan login sebagai admin.");
+        return;
+    }
+
+    const club = getClubById(clubId);
+
+    if (!club) {
+        showToast("Klub tidak ditemukan.");
+        return;
+    }
+
+    const hasMatches = matches.some(match =>
+        match.home_club_id === clubId ||
+        match.away_club_id === clubId
+    );
+
+    if (hasMatches) {
+        showToast(
+            "Klub masih punya pertandingan. Hapus pertandingannya dulu."
+        );
+        return;
+    }
+
+    const confirmed = confirm(`Hapus klub "${club.name}"?`);
+
+    if (!confirmed) return;
+
+    try {
+
+        await databases.deleteRow({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId: APPWRITE_CONFIG.clubsTableId,
+            rowId: clubId
+        });
+
+        const logoFileId = extractFileId(club.logo_url);
+
+        if (logoFileId) {
+            await deleteLogoFile(logoFileId);
+        }
+
+        showToast("Klub berhasil dihapus.");
+
+        await loadClubs();
+
+    } catch (error) {
+
+        console.error("Gagal menghapus klub:", error);
+
+        showToast(
+            "Gagal menghapus klub: " +
+            (error.message || "Unknown error")
+        );
+    }
+}
 
 
 /* =========================================================
-   OPEN MATCH MODAL
+   MATCH MODAL
 ========================================================= */
 
 function openMatchModal() {
-
-    if (!currentUser || !databases) {
-
-        showToast(
-            "Silakan login sebagai admin."
-        );
-
-        return;
-    }
-
-    editingMatchId = null;
-
-    const form =
-        document.getElementById("match-form");
-
-    if (form) {
-        form.reset();
-    }
-
-    document.getElementById(
-        "match-modal-title"
-    ).textContent =
-        "Input Pertandingan";
-
-    populateMatchClubOptions();
-
-    document.getElementById(
-        "match-modal"
-    ).classList.add("show");
-}
-
-
-/* =========================================================
-   CLOSE MATCH MODAL
-========================================================= */
-
-function closeMatchModal() {
-
-    document.getElementById(
-        "match-modal"
-    ).classList.remove("show");
-
-    const form =
-        document.getElementById("match-form");
-
-    if (form) {
-        form.reset();
-    }
-
-    editingMatchId = null;
-}
-
-
-/* =========================================================
-   POPULATE CLUB OPTIONS
-========================================================= */
-
-function populateMatchClubOptions() {
-
-    const group =
-        document.getElementById(
-            "match-group"
-        ).value;
-
-    const homeSelect =
-        document.getElementById(
-            "home-club"
-        );
-
-    const awaySelect =
-        document.getElementById(
-            "away-club"
-        );
-
-
-    if (!homeSelect || !awaySelect) {
-        return;
-    }
-
-
-    const groupClubs =
-        clubs.filter(club => {
-
-            const clubGroup =
-                club.group_name ||
-                club.group;
-
-            return clubGroup === group;
-        });
-
-
-    function fillSelect(
-        select,
-        placeholder
-    ) {
-
-        select.replaceChildren();
-
-
-        const option =
-            document.createElement(
-                "option"
-            );
-
-        option.value = "";
-
-        option.textContent =
-            placeholder;
-
-        select.appendChild(option);
-
-
-        groupClubs.forEach(club => {
-
-            const item =
-                document.createElement(
-                    "option"
-                );
-
-            item.value =
-                club.$id;
-
-            item.textContent =
-                club.name;
-
-            select.appendChild(item);
-
-        });
-    }
-
-
-    fillSelect(
-        homeSelect,
-        "Pilih klub kandang"
-    );
-
-
-    fillSelect(
-        awaySelect,
-        "Pilih klub tandang"
-    );
-}
-
-
-/* =========================================================
-   GROUP CHANGE
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        const groupSelect =
-            document.getElementById(
-                "match-group"
-            );
-
-
-        if (groupSelect) {
-
-            groupSelect.addEventListener(
-                "change",
-                populateMatchClubOptions
-            );
-        }
-    }
-);
-async function saveMatch(event) {
-    event.preventDefault();
 
     if (!currentUser || !databases) {
         showToast("Silakan login sebagai admin.");
         return;
     }
 
-    const group =
-        document.getElementById("match-group").value;
+    if (clubs.length < 2) {
+        showToast("Tambahkan minimal 2 klub terlebih dahulu.");
+        return;
+    }
 
-    const homeClubId =
-        document.getElementById("home-club").value;
+    editingMatchId = null;
 
-    const awayClubId =
-        document.getElementById("away-club").value;
+    document.getElementById("match-form").reset();
 
-    const matchDate =
-        document.getElementById("match-date").value;
+    document.getElementById("match-modal-title").textContent =
+        "Input Pertandingan";
 
-    const matchTime =
-        document.getElementById("match-time").value;
+    populateMatchClubOptions();
 
-    const venue =
-        document.getElementById("match-venue").value.trim();
+    document.getElementById("match-modal").classList.add("show");
+}
 
-    const status =
-        document.getElementById("match-status").value;
+function closeMatchModal() {
 
-    const homeValue =
-        document.getElementById("home-score").value;
+    document.getElementById("match-modal").classList.remove("show");
 
-    const awayValue =
-        document.getElementById("away-score").value;
+    const form = document.getElementById("match-form");
+
+    if (form) form.reset();
+
+    editingMatchId = null;
+}
+
+function populateMatchClubOptions() {
+
+    const group = document.getElementById("match-group").value;
+    const homeSelect = document.getElementById("home-club");
+    const awaySelect = document.getElementById("away-club");
+
+    if (!homeSelect || !awaySelect) return;
+
+    const groupClubs = clubs
+        .filter(club => getClubGroup(club) === group)
+        .sort((a, b) =>
+            String(a.name || "").localeCompare(String(b.name || ""))
+        );
+
+    function fillSelect(select, placeholder) {
+
+        select.replaceChildren();
+
+        const first = document.createElement("option");
+        first.value = "";
+        first.textContent = placeholder;
+        select.appendChild(first);
+
+        groupClubs.forEach(club => {
+
+            const item = document.createElement("option");
+            item.value = club.$id;
+            item.textContent = club.name;
+
+            select.appendChild(item);
+        });
+    }
+
+    fillSelect(homeSelect, "Pilih klub kandang");
+    fillSelect(awaySelect, "Pilih klub tandang");
+}
 
 
-    /* =========================================
-       VALIDASI
-    ========================================= */
+/* =========================================================
+   SAVE MATCH
+========================================================= */
+
+async function saveMatch(event) {
+
+    event.preventDefault();
+
+    if (savingMatch) return;
+
+    if (!currentUser || !databases) {
+        showToast("Silakan login sebagai admin.");
+        return;
+    }
+
+    const group = document.getElementById("match-group").value;
+    const homeClubId = document.getElementById("home-club").value;
+    const awayClubId = document.getElementById("away-club").value;
+    const matchDate = document.getElementById("match-date").value;
+    const matchTime = document.getElementById("match-time").value;
+    const venue = document.getElementById("match-venue").value.trim();
+    const status = document.getElementById("match-status").value;
+    const homeValue = document.getElementById("home-score").value;
+    const awayValue = document.getElementById("away-score").value;
+
+    /* ---------- VALIDASI ---------- */
 
     if (!group) {
         showToast("Grup wajib dipilih.");
@@ -3888,16 +3601,12 @@ async function saveMatch(event) {
     }
 
     if (homeClubId === awayClubId) {
-        showToast(
-            "Klub kandang dan tandang tidak boleh sama."
-        );
+        showToast("Klub kandang dan tandang tidak boleh sama.");
         return;
     }
 
     if (!matchDate || !matchTime) {
-        showToast(
-            "Tanggal dan waktu pertandingan wajib diisi."
-        );
+        showToast("Tanggal dan waktu pertandingan wajib diisi.");
         return;
     }
 
@@ -3906,33 +3615,45 @@ async function saveMatch(event) {
         return;
     }
 
+    /* Cegah pertandingan ganda (pasangan klub yang sama di grup yang sama) */
+    const duplicate = matches.some(match => {
 
-    /* =========================================
-       SKOR
-    ========================================= */
+        if (match.$id === editingMatchId) return false;
+
+        if ((match.group_name || "") !== group) return false;
+
+        const samePair =
+            (match.home_club_id === homeClubId &&
+                match.away_club_id === awayClubId) ||
+            (match.home_club_id === awayClubId &&
+                match.away_club_id === homeClubId);
+
+        return samePair;
+    });
+
+    if (duplicate) {
+        showToast(
+            "Pertandingan kedua klub ini di grup tersebut sudah ada."
+        );
+        return;
+    }
+
+    /* ---------- SKOR ---------- */
 
     let homeScore = null;
     let awayScore = null;
 
     if (status === "finished") {
 
-        if (
-            homeValue === "" ||
-            awayValue === ""
-        ) {
+        if (homeValue === "" || awayValue === "") {
             showToast(
                 "Masukkan skor kedua klub jika pertandingan selesai."
             );
-
             return;
         }
 
-        homeScore =
-            Number(homeValue);
-
-        awayScore =
-            Number(awayValue);
-
+        homeScore = Number(homeValue);
+        awayScore = Number(awayValue);
 
         if (
             !Number.isInteger(homeScore) ||
@@ -3940,140 +3661,84 @@ async function saveMatch(event) {
             homeScore < 0 ||
             awayScore < 0
         ) {
-
-            showToast(
-                "Skor harus berupa bilangan bulat minimal 0."
-            );
-
+            showToast("Skor harus berupa bilangan bulat minimal 0.");
             return;
         }
-
     }
 
+    /* ---------- WAKTU ---------- */
 
-    /* =========================================
-       DATA APPWRITE
-    ========================================= */
-    
+    const kickoffDate = new Date(`${matchDate}T${matchTime}:00`);
 
+    if (Number.isNaN(kickoffDate.getTime())) {
+        showToast("Tanggal atau waktu tidak valid.");
+        return;
+    }
+
+    /*
+        Dikirim sebagai ISO (UTC) supaya waktu tidak bergeser
+        saat ditampilkan kembali di zona waktu pengguna.
+    */
     const data = {
-
-        Stage: "Group Stage",
-
+        [MATCH_STAGE_FIELD]: "Group Stage",
         group_name: group,
-
         home_club_id: homeClubId,
-
         away_club_id: awayClubId,
-
-        kickoff:
-            `${matchDate}T${matchTime}:00`,
-
+        kickoff: kickoffDate.toISOString(),
         venue: venue,
-
         status: status,
-
         home_score: homeScore,
-
         away_score: awayScore
-
     };
 
+    /* ---------- SIMPAN ---------- */
 
-    console.log(
-        "DATA MATCH YANG DIKIRIM:",
-        data
-    );
-
-
-    /* =========================================
-       SIMPAN
-    ========================================= */
+    savingMatch = true;
 
     try {
 
         if (editingMatchId) {
 
             await databases.updateRow({
-
-                databaseId:
-                    APPWRITE_CONFIG.databaseId,
-
-                tableId:
-                    APPWRITE_CONFIG.matchesTableId,
-
-                rowId:
-                    editingMatchId,
-
-                data:
-                    data
-
+                databaseId: APPWRITE_CONFIG.databaseId,
+                tableId: APPWRITE_CONFIG.matchesTableId,
+                rowId: editingMatchId,
+                data: data
             });
 
-
-            showToast(
-                "Pertandingan berhasil diperbarui."
-            );
+            showToast("Pertandingan berhasil diperbarui.");
 
         } else {
 
             await databases.createRow({
-
-                databaseId:
-                    APPWRITE_CONFIG.databaseId,
-
-                tableId:
-                    APPWRITE_CONFIG.matchesTableId,
-
-                rowId:
-                    Appwrite.ID.unique(),
-
-                data:
-                    data
-
+                databaseId: APPWRITE_CONFIG.databaseId,
+                tableId: APPWRITE_CONFIG.matchesTableId,
+                rowId: Appwrite.ID.unique(),
+                data: data
             });
 
-
-            showToast(
-                "Pertandingan berhasil ditambahkan."
-            );
+            showToast("Pertandingan berhasil ditambahkan.");
         }
-
-
-        /* =========================================
-           RESET
-        ========================================= */
 
         closeMatchModal();
 
-        editingMatchId = null;
-
         await loadMatches();
-
 
     } catch (error) {
 
-        console.error(
-            "GAGAL MENYIMPAN MATCH:",
-            error
-        );
-
-        console.error(
-            "DATA YANG DIKIRIM:",
-            data
-        );
-
+        console.error("GAGAL MENYIMPAN MATCH:", error);
+        console.error("DATA YANG DIKIRIM:", data);
 
         showToast(
             "Gagal menyimpan pertandingan: " +
-            (
-                error.message ||
-                "Periksa konfigurasi Appwrite."
-            )
+            (error.message || "Periksa konfigurasi Appwrite.")
         );
+
+    } finally {
+
+        savingMatch = false;
     }
 }
-
 
 
 /* =========================================================
@@ -4082,141 +3747,56 @@ async function saveMatch(event) {
 
 async function loadMatches() {
 
-    if (!databases) {
-        return;
-    }
-
+    if (!databases) return;
 
     try {
 
-        const result =
-            await databases.listRows({
-
-                databaseId:
-                    APPWRITE_CONFIG.databaseId,
-
-                tableId:
-                    APPWRITE_CONFIG.matchesTableId
-            });
-
-
-        matches =
-            result.rows || [];
-
-
-        console.log(
-            "MATCHES:",
-            matches
-        );
-
+        matches = await listAllRows(APPWRITE_CONFIG.matchesTableId);
 
         renderMatches();
-
-
         renderMatchStandings();
-
-
         updateMatchStats();
-
 
     } catch (error) {
 
-        console.error(
-            "Gagal mengambil pertandingan:",
-            error
-        );
+        console.error("Gagal mengambil pertandingan:", error);
 
-
-        showToast(
-            "Gagal memuat pertandingan."
-        );
+        showToast("Gagal memuat pertandingan.");
     }
 }
 
 
 /* =========================================================
-   GET CLUB
+   FORMAT DATE & TIME
 ========================================================= */
 
-function getClubById(
-    clubId
-) {
+function formatMatchDate(kickoff) {
 
-    return clubs.find(
-        club =>
-            club.$id === clubId
-    );
+    if (!kickoff) return "-";
+
+    const date = new Date(kickoff);
+
+    if (Number.isNaN(date.getTime())) return "-";
+
+    return date.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
 }
 
+function formatMatchTime(kickoff) {
 
-/* =========================================================
-   FORMAT DATE
-========================================================= */
+    if (!kickoff) return "-";
 
-function formatMatchDate(
-    kickoff
-) {
+    const date = new Date(kickoff);
 
-    if (!kickoff) {
-        return "-";
-    }
+    if (Number.isNaN(date.getTime())) return "-";
 
-
-    const date =
-        new Date(kickoff);
-
-
-    if (Number.isNaN(
-        date.getTime()
-    )) {
-
-        return "-";
-    }
-
-
-    return date.toLocaleDateString(
-        "id-ID",
-        {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-        }
-    );
-}
-
-
-/* =========================================================
-   FORMAT TIME
-========================================================= */
-
-function formatMatchTime(
-    kickoff
-) {
-
-    if (!kickoff) {
-        return "-";
-    }
-
-
-    const date =
-        new Date(kickoff);
-
-
-    if (Number.isNaN(
-        date.getTime()
-    )) {
-
-        return "-";
-    }
-
-
-    return date.toLocaleTimeString(
-        "id-ID",
-        {
-            hour: "2-digit",
-            minute: "2-digit"
-        }
-    );
+    return date.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 }
 
 
@@ -4227,337 +3807,148 @@ function formatMatchTime(
 function renderMatches() {
 
     const containers = [
-
-        document.getElementById(
-            "matches-container"
-        ),
-
-        document.getElementById(
-            "latest-matches"
-        )
-
+        document.getElementById("matches-container"),
+        document.getElementById("latest-matches")
     ];
 
-
-    containers.forEach(
-        container => {
-
-            if (!container) {
-                return;
-            }
-
-
-            container.replaceChildren();
-
-
-            if (!matches.length) {
-
-                const empty =
-                    document.createElement(
-                        "div"
-                    );
-
-                empty.className =
-                    "empty";
-
-
-                empty.innerHTML = `
-
-                    <div class="empty-icon">
-                        ⚽
-                    </div>
-
-                    Belum ada pertandingan.
-
-                `;
-
-
-                container.appendChild(
-                    empty
-                );
-
-                return;
-            }
-
-
-            /*
-             * Urutkan berdasarkan kickoff
-             */
-
-            const sortedMatches =
-                [...matches].sort(
-                    (a, b) =>
-                        new Date(
-                            a.kickoff
-                        ) -
-                        new Date(
-                            b.kickoff
-                        )
-                );
-
-
-            /*
-             * Beranda hanya tampilkan
-             * beberapa pertandingan terbaru.
-             */
-
-            const displayMatches =
-                container.id ===
-                    "latest-matches"
-
-                    ? sortedMatches.slice(
-                        0,
-                        5
-                    )
-
-                    : sortedMatches;
-
-
-            displayMatches.forEach(
-                match => {
-
-                    container.appendChild(
-                        createMatchElement(
-                            match
-                        )
-                    );
-
-                }
-            );
-
-        }
+    const sortedMatches = [...matches].sort(
+        (a, b) => new Date(a.kickoff) - new Date(b.kickoff)
     );
+
+    /*
+        Beranda: 5 pertandingan yang waktunya paling dekat
+        dengan sekarang, ditampilkan berurutan.
+    */
+    const now = Date.now();
+
+    const homeMatches = [...matches]
+        .sort((a, b) =>
+            Math.abs(new Date(a.kickoff) - now) -
+            Math.abs(new Date(b.kickoff) - now)
+        )
+        .slice(0, 5)
+        .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
+
+    containers.forEach(container => {
+
+        if (!container) return;
+
+        container.replaceChildren();
+
+        if (!matches.length) {
+
+            const empty = document.createElement("div");
+            empty.className = "empty";
+            empty.innerHTML = `
+                <div class="empty-icon">⚽</div>
+                Belum ada pertandingan.
+            `;
+
+            container.appendChild(empty);
+
+            return;
+        }
+
+        const list =
+            container.id === "latest-matches"
+                ? homeMatches
+                : sortedMatches;
+
+        list.forEach(match => {
+            container.appendChild(createMatchElement(match));
+        });
+    });
 }
 
+function createMatchElement(match) {
 
-/* =========================================================
-   CREATE MATCH ELEMENT
-========================================================= */
+    const homeClub = getClubById(match.home_club_id);
+    const awayClub = getClubById(match.away_club_id);
 
-function createMatchElement(
-    match
-) {
+    const homeName = homeClub?.name || "Klub Kandang";
+    const awayName = awayClub?.name || "Klub Tandang";
 
-    const homeClub =
-        getClubById(
-            match.home_club_id
-        );
+    const homeLogo = homeClub?.logo_url || "";
+    const awayLogo = awayClub?.logo_url || "";
 
+    const isFinished = match.status === "finished";
 
-    const awayClub =
-        getClubById(
-            match.away_club_id
-        );
+    const scoreText = isFinished
+        ? `${match.home_score ?? 0} - ${match.away_score ?? 0}`
+        : "VS";
 
+    const id = escapeHtml(match.$id);
 
-    const element =
-        document.createElement(
-            "div"
-        );
+    function logoHtml(url, name) {
+        return url
+            ? `<img src="${escapeHtml(url)}"
+                    alt="${escapeHtml(name)}"
+                    onerror="this.replaceWith(document.createTextNode('⚽'))">`
+            : "⚽";
+    }
 
-
-    element.className =
-        "match";
-
-
-    const homeName =
-        homeClub?.name ||
-        "Klub Kandang";
-
-
-    const awayName =
-        awayClub?.name ||
-        "Klub Tandang";
-
-
-    const homeLogo =
-        homeClub?.logo_url ||
-        "";
-
-
-    const awayLogo =
-        awayClub?.logo_url ||
-        "";
-
-
-    const isFinished =
-        match.status ===
-        "finished";
-
-
-    const scoreText =
-        isFinished
-
-            ? `${match.home_score ?? 0} - ${match.away_score ?? 0}`
-
-            : "VS";
-
+    const element = document.createElement("div");
+    element.className = "match";
 
     element.innerHTML = `
 
         <div class="match-info">
-
-            <strong>
-                ${escapeHtml(
-                    formatMatchDate(
-                        match.kickoff
-                    )
-                )}
-            </strong>
-
-            ${escapeHtml(
-                formatMatchTime(
-                    match.kickoff
-                )
-            )}
-
+            <strong>${escapeHtml(formatMatchDate(match.kickoff))}</strong>
+            ${escapeHtml(formatMatchTime(match.kickoff))}
         </div>
-
 
         <div class="teams">
 
-
             <div class="team">
-
-                <div class="team-logo">
-
-                    ${
-                        homeLogo
-
-                        ? `
-                            <img
-                                src="${escapeHtml(
-                                    homeLogo
-                                )}"
-                                alt="${escapeHtml(
-                                    homeName
-                                )}"
-                            >
-                        `
-
-                        : "⚽"
-                    }
-
-                </div>
-
-
-                <div class="team-name">
-
-                    ${escapeHtml(
-                        homeName
-                    )}
-
-                </div>
-
+                <div class="team-logo">${logoHtml(homeLogo, homeName)}</div>
+                <div class="team-name">${escapeHtml(homeName)}</div>
             </div>
-
 
             <div class="score">
-
-                ${escapeHtml(
-                    scoreText
-                )}
-
-                <small>
-
-                    ${
-                        isFinished
-                            ? "FT"
-                            : "MATCH"
-                    }
-
-                </small>
-
+                ${escapeHtml(scoreText)}
+                <small>${isFinished ? "FT" : "MATCH"}</small>
             </div>
-
 
             <div class="team">
-
-                <div class="team-name">
-
-                    ${escapeHtml(
-                        awayName
-                    )}
-
-                </div>
-
-
-                <div class="team-logo">
-
-                    ${
-                        awayLogo
-
-                        ? `
-                            <img
-                                src="${escapeHtml(
-                                    awayLogo
-                                )}"
-                                alt="${escapeHtml(
-                                    awayName
-                                )}"
-                            >
-                        `
-
-                        : "⚽"
-                    }
-
-                </div>
-
+                <div class="team-name">${escapeHtml(awayName)}</div>
+                <div class="team-logo">${logoHtml(awayLogo, awayName)}</div>
             </div>
-
 
         </div>
 
-
         <div class="venue">
 
-            📍 ${escapeHtml(
-                match.venue || "-"
-            )}
-
+            📍 ${escapeHtml(match.venue || "-")}
 
             ${
                 currentUser
-
-                ? `
-
-                    <div
-                        style="
+                    ? `
+                        <div style="
                             display:flex;
                             justify-content:flex-end;
                             gap:6px;
                             margin-top:8px;
-                        "
-                    >
+                        ">
 
-                        <button
-                            type="button"
-                            class="btn-edit"
-                            onclick="editMatch('${match.$id}')"
-                        >
-                            Edit
-                        </button>
+                            <button type="button"
+                                class="btn-edit"
+                                onclick="editMatch('${id}')">
+                                Edit
+                            </button>
 
+                            <button type="button"
+                                class="btn-delete"
+                                onclick="deleteMatch('${id}')">
+                                Hapus
+                            </button>
 
-                        <button
-                            type="button"
-                            class="btn-delete"
-                            onclick="deleteMatch('${match.$id}')"
-                        >
-                            Hapus
-                        </button>
-
-                    </div>
-
-                `
-
-                : ""
+                        </div>
+                    `
+                    : ""
             }
 
         </div>
-
     `;
-
 
     return element;
 }
@@ -4567,174 +3958,70 @@ function createMatchElement(
    EDIT MATCH
 ========================================================= */
 
-function editMatch(
-    matchId
-) {
+function editMatch(matchId) {
 
     if (!currentUser) {
-
-        showToast(
-            "Silakan login sebagai admin."
-        );
-
+        showToast("Silakan login sebagai admin.");
         return;
     }
 
-
-    const match =
-        matches.find(
-            item =>
-                item.$id === matchId
-        );
-
+    const match = matches.find(item => item.$id === matchId);
 
     if (!match) {
-
-        showToast(
-            "Pertandingan tidak ditemukan."
-        );
-
+        showToast("Pertandingan tidak ditemukan.");
         return;
     }
 
+    editingMatchId = matchId;
 
-    editingMatchId =
-        matchId;
+    document.getElementById("match-form").reset();
 
-
-    document.getElementById(
-        "match-form"
-    ).reset();
-
-
-    document.getElementById(
-        "match-modal-title"
-    ).textContent =
+    document.getElementById("match-modal-title").textContent =
         "Edit Pertandingan";
 
-
-    document.getElementById(
-        "match-group"
-    ).value =
+    document.getElementById("match-group").value =
         match.group_name || "A";
-
 
     populateMatchClubOptions();
 
-
-    document.getElementById(
-        "home-club"
-    ).value =
+    document.getElementById("home-club").value =
         match.home_club_id || "";
 
-
-    document.getElementById(
-        "away-club"
-    ).value =
+    document.getElementById("away-club").value =
         match.away_club_id || "";
-
-
-    /*
-     * Ambil tanggal dan waktu
-     * dari kickoff
-     */
 
     if (match.kickoff) {
 
-        const kickoff =
-            new Date(
-                match.kickoff
-            );
+        const kickoff = new Date(match.kickoff);
 
+        if (!Number.isNaN(kickoff.getTime())) {
 
-        if (!Number.isNaN(
-            kickoff.getTime()
-        )) {
+            const year = kickoff.getFullYear();
+            const month = String(kickoff.getMonth() + 1).padStart(2, "0");
+            const day = String(kickoff.getDate()).padStart(2, "0");
+            const hours = String(kickoff.getHours()).padStart(2, "0");
+            const minutes = String(kickoff.getMinutes()).padStart(2, "0");
 
-            const year =
-                kickoff.getFullYear();
-
-
-            const month =
-                String(
-                    kickoff.getMonth() + 1
-                ).padStart(
-                    2,
-                    "0"
-                );
-
-
-            const day =
-                String(
-                    kickoff.getDate()
-                ).padStart(
-                    2,
-                    "0"
-                );
-
-
-            const hours =
-                String(
-                    kickoff.getHours()
-                ).padStart(
-                    2,
-                    "0"
-                );
-
-
-            const minutes =
-                String(
-                    kickoff.getMinutes()
-                ).padStart(
-                    2,
-                    "0"
-                );
-
-
-            document.getElementById(
-                "match-date"
-            ).value =
+            document.getElementById("match-date").value =
                 `${year}-${month}-${day}`;
 
-
-            document.getElementById(
-                "match-time"
-            ).value =
+            document.getElementById("match-time").value =
                 `${hours}:${minutes}`;
         }
     }
 
+    document.getElementById("match-venue").value = match.venue || "";
 
-    document.getElementById(
-        "match-venue"
-    ).value =
-        match.venue || "";
+    document.getElementById("match-status").value =
+        match.status || "scheduled";
 
-
-    document.getElementById(
-        "match-status"
-    ).value =
-        match.status ||
-        "scheduled";
-
-
-    document.getElementById(
-        "home-score"
-    ).value =
+    document.getElementById("home-score").value =
         match.home_score ?? "";
 
-
-    document.getElementById(
-        "away-score"
-    ).value =
+    document.getElementById("away-score").value =
         match.away_score ?? "";
 
-
-    document.getElementById(
-        "match-modal"
-    ).classList.add(
-        "show"
-    );
+    document.getElementById("match-modal").classList.add("show");
 }
 
 
@@ -4742,588 +4029,25 @@ function editMatch(
    DELETE MATCH
 ========================================================= */
 
-async function deleteMatch(
-    matchId
-) {
+async function deleteMatch(matchId) {
 
     if (!currentUser || !databases) {
-
-        showToast(
-            "Silakan login sebagai admin."
-        );
-
+        showToast("Silakan login sebagai admin.");
         return;
     }
 
-
-    const match =
-        matches.find(
-            item =>
-                item.$id === matchId
-        );
-
+    const match = matches.find(item => item.$id === matchId);
 
     if (!match) {
-
-        showToast(
-            "Pertandingan tidak ditemukan."
-        );
-
+        showToast("Pertandingan tidak ditemukan.");
         return;
     }
 
-
-    const homeClub =
-        getClubById(
-            match.home_club_id
-        );
-
-
-    const awayClub =
-        getClubById(
-            match.away_club_id
-        );
-
-
-    const confirmed =
-        confirm(
-            `Hapus pertandingan ${
-                homeClub?.name || "?"
-            } vs ${
-                awayClub?.name || "?"
-            }?`
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    try {
-
-        await databases.deleteRow({
-
-            databaseId:
-                APPWRITE_CONFIG.databaseId,
-
-            tableId:
-                APPWRITE_CONFIG.matchesTableId,
-
-            rowId:
-                matchId
-        });
-
-
-        showToast(
-            "Pertandingan berhasil dihapus."
-        );
-
-
-        await loadMatches();
-
-
-    } catch (error) {
-
-        console.error(
-            "Gagal menghapus pertandingan:",
-            error
-        );
-
-
-        showToast(
-            "Gagal menghapus pertandingan: " +
-            (
-                error.message ||
-                "Periksa izin Appwrite."
-            )
-        );
-    }
-}
-
-
-/* =========================================================
-   UPDATE MATCH STATS
-========================================================= */
-
-function updateMatchStats() {
-
-    const element =
-        document.getElementById(
-            "stat-matches"
-        );
-
-
-    if (!element) {
-        return;
-    }
-
-
-    element.textContent =
-        matches.length;
-}
-
-
-/* =========================================================
-   RENDER STANDINGS
-========================================================= */
-
-function renderMatchStandings() {
-
-    const rows =
-        calculateStandings(
-            clubs,
-            matches
-        );
-
-
-    ["A", "B"].forEach(
-        group => {
-
-            const tbody =
-                document.getElementById(
-                    `standings-${group.toLowerCase()}`
-                );
-
-
-            if (!tbody) {
-                return;
-            }
-
-
-            tbody.replaceChildren();
-
-
-            const sorted =
-                sortStandings(
-                    rows.filter(
-                        team =>
-                            team.group ===
-                            group
-                    )
-                );
-
-
-            if (!sorted.length) {
-
-                const tr =
-                    document.createElement(
-                        "tr"
-                    );
-
-
-                const td =
-                    document.createElement(
-                        "td"
-                    );
-
-
-                td.colSpan = 9;
-
-
-                td.textContent =
-                    "Belum ada data.";
-
-
-                tr.appendChild(td);
-
-
-                tbody.appendChild(tr);
-
-
-                return;
-            }
-
-
-            sorted.forEach(
-                (team, index) => {
-
-                    const tr =
-                        document.createElement(
-                            "tr"
-                        );
-
-
-                    if (index < 2) {
-
-                        tr.className =
-                            "qualified";
-                    }
-
-
-                    const values = [
-
-                        team.name,
-
-                        team.played,
-
-                        team.won,
-
-                        team.drawn,
-
-                        team.lost,
-
-                        team.gf,
-
-                        team.ga,
-
-                        team.gd,
-
-                        team.points
-
-                    ];
-
-
-                    values.forEach(
-                        (value, valueIndex) => {
-
-                            const td =
-                                document.createElement(
-                                    "td"
-                                );
-
-
-                            td.textContent =
-                                value;
-
-
-                            if (
-                                valueIndex === 0
-                            ) {
-
-                                td.style.fontWeight =
-                                    "800";
-                            }
-
-
-                            tr.appendChild(td);
-
-                        }
-                    );
-
-
-                    tbody.appendChild(tr);
-
-                }
-            );
-
-        }
-    );
-}
-
-
-/* =========================================================
-   CALCULATE STANDINGS
-========================================================= */
-
-function calculateStandings(
-    clubs,
-    matches
-) {
-
-    const standings = {};
-
-
-    clubs.forEach(
-        club => {
-
-            standings[
-                club.$id
-            ] = {
-
-                id:
-                    club.$id,
-
-                name:
-                    club.name,
-
-                group:
-                    club.group_name ||
-                    club.group ||
-                    "A",
-
-                played:
-                    0,
-
-                won:
-                    0,
-
-                drawn:
-                    0,
-
-                lost:
-                    0,
-
-                gf:
-                    0,
-
-                ga:
-                    0,
-
-                gd:
-                    0,
-
-                points:
-                    0
-            };
-
-        }
-    );
-
-
-    matches.forEach(
-        match => {
-
-            if (
-                match.status !==
-                "finished"
-            ) {
-
-                return;
-            }
-
-
-            const home =
-                standings[
-                    match.home_club_id
-                ];
-
-
-            const away =
-                standings[
-                    match.away_club_id
-                ];
-
-
-            if (!home || !away) {
-
-                return;
-            }
-
-
-            const homeScore =
-                Number(
-                    match.home_score ?? 0
-                );
-
-
-            const awayScore =
-                Number(
-                    match.away_score ?? 0
-                );
-
-
-            home.played++;
-
-            away.played++;
-
-
-            home.gf +=
-                homeScore;
-
-            home.ga +=
-                awayScore;
-
-
-            away.gf +=
-                awayScore;
-
-            away.ga +=
-                homeScore;
-
-
-            if (
-                homeScore >
-                awayScore
-            ) {
-
-                home.won++;
-
-                away.lost++;
-
-                home.points += 3;
-
-            }
-
-            else if (
-                homeScore <
-                awayScore
-            ) {
-
-                away.won++;
-
-                home.lost++;
-
-                away.points += 3;
-
-            }
-
-            else {
-
-                home.drawn++;
-
-                away.drawn++;
-
-                home.points++;
-
-                away.points++;
-            }
-
-        }
-    );
-
-
-    Object.values(
-        standings
-    ).forEach(
-        team => {
-
-            team.gd =
-                team.gf -
-                team.ga;
-
-        }
-    );
-
-
-    return Object.values(
-        standings
-    );
-}
-
-
-/* =========================================================
-   SORT STANDINGS
-========================================================= */
-
-function sortStandings(
-    standings
-) {
-
-    return standings.sort(
-        (a, b) => {
-
-            if (
-                b.points !==
-                a.points
-            ) {
-
-                return (
-                    b.points -
-                    a.points
-                );
-            }
-
-
-            if (
-                b.gd !==
-                a.gd
-            ) {
-
-                return (
-                    b.gd -
-                    a.gd
-                );
-            }
-
-
-            return (
-                b.gf -
-                a.gf
-            );
-        }
-    );
-}
-
-/* =========================================================
-   INITIALIZE
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
-
-        console.log(
-            "KAFINA CUP loading..."
-        );
-
-
-        initializeAppwrite();
-
-
-        await checkAdminSession();
-
-
-        await loadClubs();
-
-
-        await loadMatches();
-
-    }
-);
-
-
-
-function editClub(clubId) {
-    if (!currentUser) {
-        showToast("Silakan login sebagai admin.");
-        return;
-    }
-
-    const club = clubs.find(c => c.$id === clubId);
-
-    if (!club) {
-        showToast("Klub tidak ditemukan.");
-        return;
-    }
-
-    editingClubId = club.$id;
-    editingOldLogoUrl = club.logo_url || "";
-    editingOldLogoId = null;
-
-    document.getElementById("club-name").value =
-        club.name || "";
-
-    document.getElementById("club-group").value =
-        club.group_name || "A";
-
-    const fileInput =
-        document.getElementById("club-logo-file");
-
-    if (fileInput) {
-        fileInput.value = "";
-    }
-
-    const title =
-        document.getElementById("club-modal-title");
-
-    if (title) {
-        title.textContent = "Edit Klub";
-    }
-
-    if (!currentUser) {
-    showToast("Silakan login sebagai admin.");
-    return;
-}
-
-document.getElementById("club-modal").classList.add("show");
-}
-
-async function deleteClub(clubId) {
-    if (!account || !currentUser) {
-        showToast("Silakan login sebagai admin.");
-        return;
-    }
-
-    const club = clubs.find(c => c.$id === clubId);
-
-    if (!club) {
-        showToast("Klub tidak ditemukan.");
-        return;
-    }
+    const homeClub = getClubById(match.home_club_id);
+    const awayClub = getClubById(match.away_club_id);
 
     const confirmed = confirm(
-        `Hapus klub "${club.name}"?`
+        `Hapus pertandingan ${homeClub?.name || "?"} vs ${awayClub?.name || "?"}?`
     );
 
     if (!confirmed) return;
@@ -5332,97 +4056,221 @@ async function deleteClub(clubId) {
 
         await databases.deleteRow({
             databaseId: APPWRITE_CONFIG.databaseId,
-            tableId: APPWRITE_CONFIG.clubsTableId,
-            rowId: clubId
+            tableId: APPWRITE_CONFIG.matchesTableId,
+            rowId: matchId
         });
 
-        const logoFileId = club.logo_file_id;
+        showToast("Pertandingan berhasil dihapus.");
 
-if (logoFileId && storage) {
-    try {
-        await storage.deleteFile({
-            bucketId: APPWRITE_CONFIG.storageBucketId,
-            fileId: logoFileId
-        });
-    } catch (error) {
-        console.warn("Logo klub gagal dihapus:", error);
-    }
-}
-        showToast("Klub berhasil dihapus.");
-
-        await loadClubs();
+        await loadMatches();
 
     } catch (error) {
 
-        console.error(
-            "Gagal menghapus klub:",
-            error
-        );
+        console.error("Gagal menghapus pertandingan:", error);
 
         showToast(
-            "Gagal menghapus klub: " +
-            (error.message || "Unknown error")
+            "Gagal menghapus pertandingan: " +
+            (error.message || "Periksa izin Appwrite.")
         );
     }
 }
 
 
-function renderClubs() {
-    const container = document.getElementById("clubs-container");
-    if (!container) return;
+/* =========================================================
+   MATCH STATS
+========================================================= */
 
-    container.innerHTML = "";
+function updateMatchStats() {
 
-    clubs.forEach(club => {
-        const logoUrl = club.logo_url || "";
+    const element = document.getElementById("stat-matches");
 
-        const card = document.createElement("div");
-        card.className = "club-card";
+    if (element) {
+        element.textContent = matches.length;
+    }
+}
 
-        card.innerHTML = `
-            <div class="club-logo">
-                ${
-                    logoUrl
-                        ? `<img src="${escapeHtml(logoUrl)}"
-                               alt="${escapeHtml(club.name || "Logo klub")}"
-                               onerror="this.style.display='none'">`
-                        : `<div class="club-logo-placeholder">LOGO</div>`
-                }
-            </div>
 
-            <div class="club-info">
-                <div class="club-group">
-                    GRUP ${escapeHtml(club.group_name || "-")}
-                </div>
+/* =========================================================
+   STANDINGS
+========================================================= */
 
-                <h3>${escapeHtml(club.name || "Tanpa nama")}</h3>
+function calculateStandings(clubList, matchList) {
 
-                ${
-                    currentUser
-                        ? `
-                            <div class="club-actions">
-                                <button type="button"
-                                    class="btn-edit"
-                                    onclick="editClub('${club.$id}')">
-                                    Edit
-                                </button>
+    const standings = {};
 
-                                <button type="button"
-                                    class="btn-delete"
-                                    onclick="deleteClub('${club.$id}')">
-                                    Hapus
-                                </button>
-                            </div>
-                        `
-                        : ""
-                }
-            </div>
-        `;
+    clubList.forEach(club => {
 
-        container.appendChild(card);
+        standings[club.$id] = {
+            id: club.$id,
+            name: club.name,
+            group: getClubGroup(club),
+            played: 0,
+            won: 0,
+            drawn: 0,
+            lost: 0,
+            gf: 0,
+            ga: 0,
+            gd: 0,
+            points: 0
+        };
+    });
+
+    matchList.forEach(match => {
+
+        if (match.status !== "finished") return;
+
+        const home = standings[match.home_club_id];
+        const away = standings[match.away_club_id];
+
+        if (!home || !away) return;
+
+        const homeScore = Number(match.home_score ?? 0);
+        const awayScore = Number(match.away_score ?? 0);
+
+        home.played++;
+        away.played++;
+
+        home.gf += homeScore;
+        home.ga += awayScore;
+
+        away.gf += awayScore;
+        away.ga += homeScore;
+
+        if (homeScore > awayScore) {
+
+            home.won++;
+            away.lost++;
+            home.points += 3;
+
+        } else if (homeScore < awayScore) {
+
+            away.won++;
+            home.lost++;
+            away.points += 3;
+
+        } else {
+
+            home.drawn++;
+            away.drawn++;
+            home.points++;
+            away.points++;
+        }
+    });
+
+    Object.values(standings).forEach(team => {
+        team.gd = team.gf - team.ga;
+    });
+
+    return Object.values(standings);
+}
+
+function sortStandings(standings) {
+
+    return standings.sort((a, b) => {
+
+        if (b.points !== a.points) return b.points - a.points;
+
+        if (b.gd !== a.gd) return b.gd - a.gd;
+
+        if (b.gf !== a.gf) return b.gf - a.gf;
+
+        return String(a.name || "").localeCompare(String(b.name || ""));
     });
 }
 
+function renderMatchStandings() {
+
+    const rows = calculateStandings(clubs, matches);
+
+    ["A", "B"].forEach(group => {
+
+        const tbody = document.getElementById(
+            `standings-${group.toLowerCase()}`
+        );
+
+        if (!tbody) return;
+
+        tbody.replaceChildren();
+
+        const sorted = sortStandings(
+            rows.filter(team => team.group === group)
+        );
+
+        if (!sorted.length) {
+
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+
+            td.colSpan = 9;
+            td.textContent = "Belum ada data.";
+
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+
+            return;
+        }
+
+        sorted.forEach((team, index) => {
+
+            const tr = document.createElement("tr");
+
+            if (index < 2) {
+                tr.className = "qualified";
+            }
+
+            const values = [
+                team.name,
+                team.played,
+                team.won,
+                team.drawn,
+                team.lost,
+                team.gf,
+                team.ga,
+                team.gd,
+                team.points
+            ];
+
+            values.forEach((value, valueIndex) => {
+
+                const td = document.createElement("td");
+
+                td.textContent = value;
+
+                if (valueIndex === 0) {
+                    td.style.fontWeight = "800";
+                }
+
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+    });
+}
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+    console.log("KAFINA CUP loading...");
+
+    const groupSelect = document.getElementById("match-group");
+
+    if (groupSelect) {
+        groupSelect.addEventListener("change", populateMatchClubOptions);
+    }
+
+    initializeAppwrite();
+
+    await checkAdminSession();
+
+    await loadClubs();
+
+    await loadMatches();
+});
 </script>
 
 </body>
