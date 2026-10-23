@@ -1723,6 +1723,116 @@ h3,
     font-size: 12px;
     margin-bottom: 14px;
 }
+/* ===== KNOCKOUT DINAMIS ===== */
+
+.knockout-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.knockout-title span {
+    font-weight: 600;
+}
+
+.knockout-team {
+    align-items: center;
+    gap: 10px;
+}
+
+.ko-club {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.ko-pending {
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.ko-logo {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ko-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.5));
+}
+
+.knockout-team strong {
+    font-size: 16px;
+    color: var(--green-soft);
+}
+
+.knockout-team strong small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.knockout-team.winner {
+    background: rgba(34,197,94,.10);
+}
+
+.knockout-team.winner .ko-club {
+    color: var(--green-soft);
+}
+
+.champion-card {
+    text-align: center;
+    padding: 24px 16px;
+}
+
+.champion-logo {
+    width: 110px;
+    height: 110px;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+}
+
+.champion-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 22px rgba(250,204,21,.35));
+}
+
+.champion-name {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.champion-caption {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+.stage-badge {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(34,197,94,.12);
+    color: var(--green-soft);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .5px;
+}
 </style>
 </head>
 
@@ -2043,6 +2153,8 @@ Jadwal dan hasil pertandingan
             onclick="setMatchFilter('group', 'A')">Grup A</button>
         <button type="button" class="chip" data-value="B"
             onclick="setMatchFilter('group', 'B')">Grup B</button>
+        <button type="button" class="chip" data-value="KO"
+            onclick="setMatchFilter('group', 'KO')">Knockout</button>    
     </div>
 
 </div>
@@ -2266,7 +2378,6 @@ Belum ada data.
 <!-- =========================================================
      KNOCKOUT
 ========================================================= -->
-
 <section
     id="page-knockout"
     class="page"
@@ -2288,170 +2399,9 @@ Semifinal dan final
 
 </div>
 
-
-<div class="bracket">
-
-
-<div class="round">
-
-<h3>
-SEMIFINAL
-</h3>
-
-
-<div class="knockout-match">
-
-<div class="knockout-title">
-SEMIFINAL 1
-</div>
-
-<div class="knockout-team">
-
-<span>
-Juara Grup A
-</span>
-
-<strong>
--
-</strong>
-
-</div>
-
-<div class="knockout-team">
-
-<span>
-Runner-up Grup B
-</span>
-
-<strong>
--
-</strong>
-
-</div>
-
-</div>
-
-
-<div class="knockout-match">
-
-<div class="knockout-title">
-SEMIFINAL 2
-</div>
-
-<div class="knockout-team">
-
-<span>
-Juara Grup B
-</span>
-
-<strong>
--
-</strong>
-
-</div>
-
-<div class="knockout-team">
-
-<span>
-Runner-up Grup A
-</span>
-
-<strong>
--
-</strong>
-
-</div>
-
-</div>
-
-</div>
-
-
-<div class="round">
-
-<h3>
-FINAL
-</h3>
-
-
-<div class="knockout-match">
-
-<div class="knockout-title">
-FINAL
-</div>
-
-<div class="knockout-team">
-
-<span>
-Pemenang SF1
-</span>
-
-<strong>
--
-</strong>
-
-</div>
-
-<div class="knockout-team">
-
-<span>
-Pemenang SF2
-</span>
-
-<strong>
--
-</strong>
-
-</div>
-
-</div>
-
-</div>
-
-
-<div class="round">
-
-<h3>
-CHAMPION
-</h3>
-
-
-<div class="card">
-
-<div style="
-text-align:center;
-padding:20px;
-">
-
-<div style="
-font-size:55px;
-margin-bottom:10px;
-">
-🏆
-</div>
-
-<strong>
-KAFINA CUP
-</strong>
-
-<p style="
-color:var(--muted);
-font-size:12px;
-margin-top:5px;
-">
-Champion
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
+<div id="knockout-bracket" class="bracket"></div>
 
 </section>
-
 
 <!-- =========================================================
      CLUBS
@@ -2963,7 +2913,6 @@ SIMPAN KLUB
 
 </form>
 
-</div>
 
 </div>
 <div id="match-modal" class="modal">
@@ -2984,6 +2933,16 @@ SIMPAN KLUB
         <form id="match-form" onsubmit="saveMatch(event)">
 
             <div class="form-group">
+                <label>Babak</label>
+                <select id="match-stage" required>
+                    <option value="Group Stage">Babak Grup</option>
+                    <option value="Semifinal 1">Semifinal 1</option>
+                    <option value="Semifinal 2">Semifinal 2</option>
+                    <option value="Final">Final</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="match-group-wrap">
                 <label>Grup</label>
                 <select id="match-group" required>
                     <option value="A">Grup A</option>
@@ -3051,6 +3010,28 @@ SIMPAN KLUB
                 </div>
             </div>
 
+            <div id="pen-row" style="display:none;gap:12px">
+                <div class="form-group" style="flex:1">
+                    <label>Penalti Kandang (jika seri)</label>
+                    <input
+                        type="number"
+                        id="home-pen"
+                        min="0"
+                        placeholder="0"
+                    >
+                </div>
+
+                <div class="form-group" style="flex:1">
+                    <label>Penalti Tandang (jika seri)</label>
+                    <input
+                        type="number"
+                        id="away-pen"
+                        min="0"
+                        placeholder="0"
+                    >
+                </div>
+            </div>
+
             <button
                 type="submit"
                 class="button button-primary"
@@ -3062,7 +3043,6 @@ SIMPAN KLUB
         </form>
     </div>
 </div>
-
 <!-- =========================================================
      TOAST
 ========================================================= -->
@@ -3156,6 +3136,16 @@ const TOURNAMENT_LOGO_URL =
 
 /* Jumlah hari ke depan yang tampil di Beranda */
 const HOME_DAYS_AHEAD = 14;
+/* Babak knockout (nilai kolom Stage) */
+const KNOCKOUT_STAGES = ["Semifinal 1", "Semifinal 2", "Final"];
+
+function isKnockoutStage(stage) {
+    return KNOCKOUT_STAGES.includes(stage);
+}
+
+function getMatchStage(match) {
+    return match[MATCH_STAGE_FIELD] || "Group Stage";
+}
 /* =========================================================
    STATE
 ========================================================= */
@@ -3731,6 +3721,8 @@ async function loadClubs() {
         renderMatches();
         renderMatchStandings();
         renderTopScorers();
+        renderKnockout();
+        renderKnockout();
 
     } catch (error) {
 
@@ -3931,6 +3923,16 @@ async function deleteClub(clubId) {
    MATCH MODAL
 ========================================================= */
 
+function closeMatchModal() {
+
+    document.getElementById("match-modal").classList.remove("show");
+
+    const form = document.getElementById("match-form");
+
+    if (form) form.reset();
+
+    editingMatchId = null;
+}
 function openMatchModal() {
 
     if (!currentUser || !databases) {
@@ -3950,23 +3952,31 @@ function openMatchModal() {
     document.getElementById("match-modal-title").textContent =
         "Input Pertandingan";
 
-    populateMatchClubOptions();
+    updateMatchFormStage();
 
     document.getElementById("match-modal").classList.add("show");
 }
 
-function closeMatchModal() {
+/* Atur tampilan form sesuai babak yang dipilih */
+function updateMatchFormStage() {
 
-    document.getElementById("match-modal").classList.remove("show");
+    const knockout = isKnockoutStage(
+        document.getElementById("match-stage").value
+    );
 
-    const form = document.getElementById("match-form");
+    document.getElementById("match-group-wrap").style.display =
+        knockout ? "none" : "block";
 
-    if (form) form.reset();
+    document.getElementById("pen-row").style.display =
+        knockout ? "flex" : "none";
 
-    editingMatchId = null;
+    populateMatchClubOptions();
 }
 
 function populateMatchClubOptions() {
+
+    const stage = document.getElementById("match-stage").value;
+    const knockout = isKnockoutStage(stage);
 
     const group = document.getElementById("match-group").value;
     const homeSelect = document.getElementById("home-club");
@@ -3974,11 +3984,20 @@ function populateMatchClubOptions() {
 
     if (!homeSelect || !awaySelect) return;
 
-    const groupClubs = clubs
-        .filter(club => getClubGroup(club) === group)
-        .sort((a, b) =>
-            String(a.name || "").localeCompare(String(b.name || ""))
-        );
+    /* Babak grup: klub se-grup. Knockout: semua klub. */
+    const available = clubs
+        .filter(club => knockout || getClubGroup(club) === group)
+        .sort((a, b) => {
+
+            if (knockout) {
+                const groupCompare =
+                    getClubGroup(a).localeCompare(getClubGroup(b));
+
+                if (groupCompare !== 0) return groupCompare;
+            }
+
+            return String(a.name || "").localeCompare(String(b.name || ""));
+        });
 
     function fillSelect(select, placeholder) {
 
@@ -3989,11 +4008,14 @@ function populateMatchClubOptions() {
         first.textContent = placeholder;
         select.appendChild(first);
 
-        groupClubs.forEach(club => {
+        available.forEach(club => {
 
             const item = document.createElement("option");
             item.value = club.$id;
-            item.textContent = club.name;
+
+            item.textContent = knockout
+                ? `${club.name} (Grup ${getClubGroup(club)})`
+                : club.name;
 
             select.appendChild(item);
         });
@@ -4002,12 +4024,9 @@ function populateMatchClubOptions() {
     fillSelect(homeSelect, "Pilih klub kandang");
     fillSelect(awaySelect, "Pilih klub tandang");
 }
-
-
 /* =========================================================
    SAVE MATCH
-========================================================= */
-
+=================
 async function saveMatch(event) {
 
     event.preventDefault();
@@ -4019,7 +4038,14 @@ async function saveMatch(event) {
         return;
     }
 
-    const group = document.getElementById("match-group").value;
+    const stage = document.getElementById("match-stage").value;
+    const knockout = isKnockoutStage(stage);
+
+    /* Knockout tidak punya grup; diberi penanda "KO" untuk filter */
+    const group = knockout
+        ? "KO"
+        : document.getElementById("match-group").value;
+
     const homeClubId = document.getElementById("home-club").value;
     const awayClubId = document.getElementById("away-club").value;
     const matchDate = document.getElementById("match-date").value;
@@ -4028,13 +4054,10 @@ async function saveMatch(event) {
     let status = document.getElementById("match-status").value;
     const homeValue = document.getElementById("home-score").value;
     const awayValue = document.getElementById("away-score").value;
+    const homePenValue = document.getElementById("home-pen").value;
+    const awayPenValue = document.getElementById("away-pen").value;
 
     /* ---------- VALIDASI ---------- */
-
-    if (!group) {
-        showToast("Grup wajib dipilih.");
-        return;
-    }
 
     if (!homeClubId) {
         showToast("Klub kandang wajib dipilih.");
@@ -4061,50 +4084,58 @@ async function saveMatch(event) {
         return;
     }
 
-    /* Cegah pertandingan ganda (pasangan klub yang sama di grup yang sama) */
+    /* Cegah pertandingan ganda */
     const duplicate = matches.some(match => {
 
         if (match.$id === editingMatchId) return false;
 
+        const matchStage = getMatchStage(match);
+
+        /* Knockout: satu pertandingan per babak */
+        if (knockout) return matchStage === stage;
+
+        if (isKnockoutStage(matchStage)) return false;
+
         if ((match.group_name || "") !== group) return false;
 
-        const samePair =
+        return (
             (match.home_club_id === homeClubId &&
                 match.away_club_id === awayClubId) ||
             (match.home_club_id === awayClubId &&
-                match.away_club_id === homeClubId);
-
-        return samePair;
+                match.away_club_id === homeClubId)
+        );
     });
 
     if (duplicate) {
         showToast(
-            "Pertandingan kedua klub ini di grup tersebut sudah ada."
+            knockout
+                ? `Babak ${stage} sudah punya pertandingan.`
+                : "Pertandingan kedua klub ini di grup tersebut sudah ada."
         );
         return;
     }
 
     /* ---------- SKOR ---------- */
 
+    const hasHomeValue = homeValue !== "";
+    const hasAwayValue = awayValue !== "";
+
+    if (hasHomeValue !== hasAwayValue) {
+        showToast("Isi skor kedua klub, atau kosongkan keduanya.");
+        return;
+    }
+
+    /* Kalau skor diisi, pertandingan otomatis dianggap selesai */
+    if (hasHomeValue && hasAwayValue) {
+        status = "finished";
+    }
+
     let homeScore = null;
-let awayScore = null;
+    let awayScore = null;
 
-const hasHomeValue = homeValue !== "";
-const hasAwayValue = awayValue !== "";
+    if (status === "finished") {
 
-if (hasHomeValue !== hasAwayValue) {
-    showToast("Isi skor kedua klub, atau kosongkan keduanya.");
-    return;
-}
-
-/* Kalau skor diisi, pertandingan otomatis dianggap selesai */
-if (hasHomeValue && hasAwayValue) {
-    status = "finished";
-}
-
-if (status === "finished") {
-
-        if (homeValue === "" || awayValue === "") {
+        if (!hasHomeValue || !hasAwayValue) {
             showToast(
                 "Masukkan skor kedua klub jika pertandingan selesai."
             );
@@ -4125,6 +4156,39 @@ if (status === "finished") {
         }
     }
 
+    /* ---------- ADU PENALTI (knockout, skor seri) ---------- */
+
+    let homePen = null;
+    let awayPen = null;
+
+    if (knockout && status === "finished" && homeScore === awayScore) {
+
+        if (homePenValue === "" || awayPenValue === "") {
+            showToast(
+                "Skor seri di babak knockout: isi skor adu penalti."
+            );
+            return;
+        }
+
+        homePen = Number(homePenValue);
+        awayPen = Number(awayPenValue);
+
+        if (
+            !Number.isInteger(homePen) ||
+            !Number.isInteger(awayPen) ||
+            homePen < 0 ||
+            awayPen < 0
+        ) {
+            showToast("Skor penalti harus berupa bilangan bulat minimal 0.");
+            return;
+        }
+
+        if (homePen === awayPen) {
+            showToast("Skor adu penalti tidak boleh seri.");
+            return;
+        }
+    }
+
     /* ---------- WAKTU ---------- */
 
     const kickoffDate = new Date(`${matchDate}T${matchTime}:00`);
@@ -4134,12 +4198,8 @@ if (status === "finished") {
         return;
     }
 
-    /*
-        Dikirim sebagai ISO (UTC) supaya waktu tidak bergeser
-        saat ditampilkan kembali di zona waktu pengguna.
-    */
     const data = {
-        [MATCH_STAGE_FIELD]: "Group Stage",
+        [MATCH_STAGE_FIELD]: stage,
         group_name: group,
         home_club_id: homeClubId,
         away_club_id: awayClubId,
@@ -4147,7 +4207,9 @@ if (status === "finished") {
         venue: venue,
         status: status,
         home_score: homeScore,
-        away_score: awayScore
+        away_score: awayScore,
+        home_pen: homePen,
+        away_pen: awayPen
     };
 
     /* ---------- SIMPAN ---------- */
@@ -4198,7 +4260,6 @@ if (status === "finished") {
         savingMatch = false;
     }
 }
-
 
 /* =========================================================
    LOAD MATCHES
@@ -4527,6 +4588,7 @@ function setTournamentLogo() {
     img.src = TOURNAMENT_LOGO_URL;
 }
 
+
 function createMatchElement(match) {
 
     const homeClub = getClubById(match.home_club_id);
@@ -4543,6 +4605,22 @@ function createMatchElement(match) {
     const scoreText = isFinished
         ? `${match.home_score ?? 0} - ${match.away_score ?? 0}`
         : "VS";
+
+    let scoreCaption = isFinished ? "FT" : "MATCH";
+
+    if (
+        isFinished &&
+        match.home_pen != null &&
+        match.away_pen != null
+    ) {
+        scoreCaption = `PEN ${match.home_pen}-${match.away_pen}`;
+    }
+
+    const stage = getMatchStage(match);
+
+    const stageBadge = isKnockoutStage(stage)
+        ? `<span class="stage-badge">${escapeHtml(stage.toUpperCase())}</span>`
+        : "";
 
     const id = escapeHtml(match.$id);
 
@@ -4562,6 +4640,7 @@ function createMatchElement(match) {
         <div class="match-info">
             <strong>${escapeHtml(formatMatchDate(match.kickoff))}</strong>
             ${escapeHtml(formatMatchTime(match.kickoff))}
+            <div>${stageBadge}</div>
         </div>
 
         <div class="teams">
@@ -4573,7 +4652,7 @@ function createMatchElement(match) {
 
             <div class="score">
                 ${escapeHtml(scoreText)}
-                <small>${isFinished ? "FT" : "MATCH"}</small>
+                <small>${escapeHtml(scoreCaption)}</small>
             </div>
 
             <div class="team">
@@ -4632,6 +4711,7 @@ function createMatchElement(match) {
    EDIT MATCH
 ========================================================= */
 
+
 function editMatch(matchId) {
 
     if (!currentUser) {
@@ -4653,10 +4733,15 @@ function editMatch(matchId) {
     document.getElementById("match-modal-title").textContent =
         "Edit Pertandingan";
 
-    document.getElementById("match-group").value =
-        match.group_name || "A";
+    document.getElementById("match-stage").value = getMatchStage(match);
 
-    populateMatchClubOptions();
+    document.getElementById("match-group").value =
+        match.group_name && match.group_name !== "KO"
+            ? match.group_name
+            : "A";
+
+    /* Menyesuaikan form dan mengisi daftar klub sesuai babak */
+    updateMatchFormStage();
 
     document.getElementById("home-club").value =
         match.home_club_id || "";
@@ -4695,9 +4780,14 @@ function editMatch(matchId) {
     document.getElementById("away-score").value =
         match.away_score ?? "";
 
+    document.getElementById("home-pen").value =
+        match.home_pen ?? "";
+
+    document.getElementById("away-pen").value =
+        match.away_pen ?? "";
+
     document.getElementById("match-modal").classList.add("show");
 }
-
 
 /* =========================================================
    DELETE MATCH
@@ -5144,6 +5234,228 @@ function renderTopScorers() {
 }
 
 /* =========================================================
+   KNOCKOUT
+========================================================= */
+
+function getStageMatch(stage) {
+    return matches.find(match => getMatchStage(match) === stage) || null;
+}
+
+/* Pemenang: skor, lalu adu penalti kalau seri */
+function getMatchWinnerId(match) {
+
+    if (!match || match.status !== "finished") return null;
+
+    const home = Number(match.home_score ?? 0);
+    const away = Number(match.away_score ?? 0);
+
+    if (home > away) return match.home_club_id;
+    if (away > home) return match.away_club_id;
+
+    if (match.home_pen != null && match.away_pen != null) {
+
+        if (match.home_pen > match.away_pen) return match.home_club_id;
+        if (match.away_pen > match.home_pen) return match.away_club_id;
+    }
+
+    return null;
+}
+
+/* Grup dianggap selesai kalau semua pertandingannya sudah selesai */
+function isGroupComplete(group) {
+
+    const total = clubs.filter(club => getClubGroup(club) === group).length;
+
+    if (total < 2) return false;
+
+    const needed = (total * (total - 1)) / 2;
+
+    const finished = matches.filter(match =>
+        getMatchStage(match) === "Group Stage" &&
+        (match.group_name || "") === group &&
+        match.status === "finished"
+    ).length;
+
+    return finished >= needed;
+}
+
+/* position 0 = juara grup, 1 = runner-up */
+function getSeedClubId(group, position) {
+
+    if (!isGroupComplete(group)) return null;
+
+    const ranking = sortStandings(
+        calculateStandings(clubs, matches)
+            .filter(team => team.group === group)
+    );
+
+    return ranking[position]?.id || null;
+}
+
+function koClubHtml(clubId, fallbackLabel) {
+
+    const club = clubId ? getClubById(clubId) : null;
+
+    if (!club) {
+        return `<span class="ko-club ko-pending">${escapeHtml(fallbackLabel)}</span>`;
+    }
+
+    const logo = club.logo_url
+        ? `<img src="${escapeHtml(club.logo_url)}"
+               alt=""
+               onerror="this.replaceWith(document.createTextNode('⚽'))">`
+        : "⚽";
+
+    return `
+        <span class="ko-club">
+            <span class="ko-logo">${logo}</span>
+            ${escapeHtml(club.name)}
+        </span>
+    `;
+}
+
+function buildKnockoutCard(stage, title, slots) {
+
+    const match = getStageMatch(stage);
+
+    let teams = slots;
+    let scores = ["-", "-"];
+    let pens = null;
+    let winnerId = null;
+
+    /* Kalau pertandingan sudah dibuat admin, pakai klub dari pertandingan */
+    if (match) {
+
+        teams = [
+            { clubId: match.home_club_id, label: slots[0].label },
+            { clubId: match.away_club_id, label: slots[1].label }
+        ];
+
+        if (match.status === "finished") {
+
+            scores = [match.home_score ?? 0, match.away_score ?? 0];
+
+            if (match.home_pen != null && match.away_pen != null) {
+                pens = [match.home_pen, match.away_pen];
+            }
+
+            winnerId = getMatchWinnerId(match);
+        }
+    }
+
+    const dateText = match
+        ? `${formatMatchDate(match.kickoff)} • ${formatMatchTime(match.kickoff)}`
+        : "";
+
+    const rows = teams.map((team, index) => {
+
+        const isWinner = winnerId && team.clubId === winnerId;
+
+        const penText = pens ? ` <small>(${pens[index]})</small>` : "";
+
+        return `
+            <div class="knockout-team${isWinner ? " winner" : ""}">
+                ${koClubHtml(team.clubId, team.label)}
+                <strong>${escapeHtml(scores[index])}${penText}</strong>
+            </div>
+        `;
+    }).join("");
+
+    const card = document.createElement("div");
+    card.className = "knockout-match";
+
+    card.innerHTML = `
+        <div class="knockout-title">
+            ${escapeHtml(title)}
+            ${dateText ? `<span>${escapeHtml(dateText)}</span>` : ""}
+        </div>
+        ${rows}
+    `;
+
+    return card;
+}
+
+function renderKnockout() {
+
+    const container = document.getElementById("knockout-bracket");
+
+    if (!container) return;
+
+    container.replaceChildren();
+
+    const sf1 = getStageMatch("Semifinal 1");
+    const sf2 = getStageMatch("Semifinal 2");
+    const finalMatch = getStageMatch("Final");
+
+    /* Kolom semifinal */
+    const semiRound = document.createElement("div");
+    semiRound.className = "round";
+    semiRound.innerHTML = "<h3>SEMIFINAL</h3>";
+
+    semiRound.appendChild(buildKnockoutCard(
+        "Semifinal 1",
+        "SEMIFINAL 1",
+        [
+            { clubId: getSeedClubId("A", 0), label: "Juara Grup A" },
+            { clubId: getSeedClubId("B", 1), label: "Runner-up Grup B" }
+        ]
+    ));
+
+    semiRound.appendChild(buildKnockoutCard(
+        "Semifinal 2",
+        "SEMIFINAL 2",
+        [
+            { clubId: getSeedClubId("B", 0), label: "Juara Grup B" },
+            { clubId: getSeedClubId("A", 1), label: "Runner-up Grup A" }
+        ]
+    ));
+
+    /* Kolom final */
+    const finalRound = document.createElement("div");
+    finalRound.className = "round";
+    finalRound.innerHTML = "<h3>FINAL</h3>";
+
+    finalRound.appendChild(buildKnockoutCard(
+        "Final",
+        "FINAL",
+        [
+            { clubId: getMatchWinnerId(sf1), label: "Pemenang SF1" },
+            { clubId: getMatchWinnerId(sf2), label: "Pemenang SF2" }
+        ]
+    ));
+
+    /* Kolom juara */
+    const championId = getMatchWinnerId(finalMatch);
+    const champion = championId ? getClubById(championId) : null;
+
+    const championRound = document.createElement("div");
+    championRound.className = "round";
+
+    const logo = champion?.logo_url
+        ? `<img src="${escapeHtml(champion.logo_url)}"
+               alt="${escapeHtml(champion.name || "Juara")}"
+               onerror="this.replaceWith(document.createTextNode('🏆'))">`
+        : "🏆";
+
+    championRound.innerHTML = `
+        <h3>JUARA</h3>
+        <div class="card champion-card">
+            <div class="champion-logo">${logo}</div>
+            <div class="champion-name">
+                ${escapeHtml(champion ? champion.name : "KAFINA CUP")}
+            </div>
+            <div class="champion-caption">
+                ${champion ? "JUARA KAFINA CUP" : "CHAMPION"}
+            </div>
+        </div>
+    `;
+
+    container.appendChild(semiRound);
+    container.appendChild(finalRound);
+    container.appendChild(championRound);
+}
+
+/* =========================================================
    MATCH STATS
 ========================================================= */
 
@@ -5185,6 +5497,7 @@ function calculateStandings(clubList, matchList) {
     matchList.forEach(match => {
 
         if (match.status !== "finished") return;
+        if (getMatchStage(match) !== "Group Stage") return;
 
         const home = standings[match.home_club_id];
         const away = standings[match.away_club_id];
@@ -5328,6 +5641,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (groupSelect) {
         groupSelect.addEventListener("change", populateMatchClubOptions);
+    }
+        const stageSelect = document.getElementById("match-stage");
+
+    if (stageSelect) {
+        stageSelect.addEventListener("change", updateMatchFormStage);
     }
 
     initializeAppwrite();
