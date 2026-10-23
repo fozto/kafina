@@ -4206,8 +4206,8 @@ async function saveMatch(event) {
         status: status,
         home_score: homeScore,
         away_score: awayScore,
-        home_pen: homePen,
-        away_pen: awayPen
+        home_penalty_score: homePen,
+        away_penalty_scorealty_scorealty_score: awayPen
     };
 
     /* ---------- SIMPAN ---------- */
@@ -4609,10 +4609,10 @@ function createMatchElement(match) {
 
     if (
         isFinished &&
-        match.home_pen != null &&
-        match.away_pen != null
+        match.home_penalty_score != null &&
+        match.away_penalty_scorealty_scorealty_score != null
     ) {
-        scoreCaption = `PEN ${match.home_pen}-${match.away_pen}`;
+        scoreCaption = `PEN ${match.home_penalty_score}-${match.away_penalty_scorealty_scorealty_score}`;
     }
 
     const stage = getMatchStage(match);
@@ -4780,10 +4780,10 @@ function editMatch(matchId) {
         match.away_score ?? "";
 
     document.getElementById("home-pen").value =
-        match.home_pen ?? "";
+        match.home_penalty_score ?? "";
 
     document.getElementById("away-pen").value =
-        match.away_pen ?? "";
+        match.away_penalty_scorealty_scorealty_score ?? "";
 
     document.getElementById("match-modal").classList.add("show");
 }
@@ -5251,10 +5251,10 @@ function getMatchWinnerId(match) {
     if (home > away) return match.home_club_id;
     if (away > home) return match.away_club_id;
 
-    if (match.home_pen != null && match.away_pen != null) {
+    if (match.home_penalty_score != null && match.away_penalty_scorealty_scorealty_score != null) {
 
-        if (match.home_pen > match.away_pen) return match.home_club_id;
-        if (match.away_pen > match.home_pen) return match.away_club_id;
+        if (match.home_penalty_score > match.away_penalty_scorealty_scorealty_score) return match.home_club_id;
+        if (match.away_penalty_scorealty_scorealty_score > match.home_penalty_score) return match.away_club_id;
     }
 
     return null;
@@ -5334,8 +5334,8 @@ function buildKnockoutCard(stage, title, slots) {
 
             scores = [match.home_score ?? 0, match.away_score ?? 0];
 
-            if (match.home_pen != null && match.away_pen != null) {
-                pens = [match.home_pen, match.away_pen];
+            if (match.home_penalty_score != null && match.away_penalty_scorealty_scorealty_score != null) {
+                pens = [match.home_penalty_score, match.away_penalty_scorealty_scorealty_score];
             }
 
             winnerId = getMatchWinnerId(match);
