@@ -1563,6 +1563,121 @@ h3,
         height: 42px;
     }
 }
+/* ===== HERO BARU ===== */
+
+.hero-content {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    flex-shrink: 0;
+    filter: drop-shadow(0 8px 24px rgba(34,197,94,.35));
+}
+
+.next-match {
+    position: relative;
+    z-index: 1;
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border-light);
+}
+
+.next-label {
+    color: var(--green-soft);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.next-teams {
+    font-family: var(--font-heading);
+    font-size: clamp(18px, 3.5vw, 26px);
+    font-weight: 800;
+    margin-top: 6px;
+}
+
+.next-meta {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.countdown {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.countdown div {
+    min-width: 66px;
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: 12px;
+    background: rgba(2,8,6,.55);
+    border: 1px solid var(--border-light);
+}
+
+.countdown strong {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--green-soft);
+    line-height: 1;
+}
+
+.countdown small {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 1px;
+}
+
+/* ===== JUDUL TANGGAL ===== */
+
+.day-heading {
+    margin: 14px 0 2px;
+    padding-left: 10px;
+    border-left: 3px solid var(--green-light);
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.day-heading:first-child { margin-top: 0; }
+
+.day-heading span {
+    color: var(--green-soft);
+    font-size: 10px;
+    letter-spacing: 1px;
+    margin-left: 6px;
+}
+
+@media (max-width: 650px) {
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero-logo {
+        width: 96px;
+        height: 96px;
+    }
+
+    .countdown { justify-content: center; }
+
+    .countdown div { min-width: 58px; }
+
+    .next-match { text-align: center; }
+}
 </style>
 </head>
 
@@ -1686,20 +1801,44 @@ h3,
     id="page-home"
     class="page active"
 >
-
 <div class="hero">
 
-    <h2>KAFINA CUP</h2>
+    <div class="hero-content">
 
-    <p>
-        Website resmi kompetisi sepak bola
-        KAFINA CUP.
-        Ikuti jadwal pertandingan, klasemen,
-        klub, dan perjalanan menuju juara.
-    </p>
+        <img
+            id="tournament-logo"
+            class="hero-logo"
+            alt="Logo KAFINA CUP"
+        >
+
+        <div class="hero-text">
+            <h2>KAFINA CUP</h2>
+            <p>
+                Website resmi kompetisi sepak bola
+                KAFINA CUP.
+                Ikuti jadwal pertandingan, klasemen,
+                klub, dan perjalanan menuju juara.
+            </p>
+        </div>
+
+    </div>
+
+    <div id="next-match" class="next-match" style="display:none">
+
+        <div class="next-label">PERTANDINGAN BERIKUTNYA</div>
+        <div id="next-match-teams" class="next-teams"></div>
+        <div id="next-match-meta" class="next-meta"></div>
+
+        <div class="countdown">
+            <div><strong id="cd-days">0</strong><small>HARI</small></div>
+            <div><strong id="cd-hours">0</strong><small>JAM</small></div>
+            <div><strong id="cd-mins">0</strong><small>MENIT</small></div>
+            <div><strong id="cd-secs">0</strong><small>DETIK</small></div>
+        </div>
+
+    </div>
 
 </div>
-
 
 <div class="stats">
 
@@ -1770,8 +1909,8 @@ h3,
 
 <div class="section-title">
     <div>
-        <h2>Pertandingan</h2>
-        <p>Jadwal dan hasil pertandingan</p>
+        <h2>Pertandingan 2 Minggu ke Depan</h2>
+        <p>Jadwal dan hasil dalam 14 hari ke depan</p>
     </div>
 
     <button
@@ -2935,7 +3074,12 @@ const APPWRITE_CONFIG = {
 */
 const MATCH_STAGE_FIELD = "Stage";
 
+/* Logo turnamen (Cloudinary). Ganti dengan link logo kamu. */
+const TOURNAMENT_LOGO_URL =
+    "https://res.cloudinary.com/demo/image/upload/sample.jpg";
 
+/* Jumlah hari ke depan yang tampil di Beranda */
+const HOME_DAYS_AHEAD = 14;
 /* =========================================================
    STATE
 ========================================================= */
@@ -4041,61 +4185,195 @@ function formatMatchTime(kickoff) {
    RENDER MATCHES
 ========================================================= */
 
+function appendEmpty(container, icon, text) {
+
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.innerHTML = `
+        <div class="empty-icon">${icon}</div>
+        ${escapeHtml(text)}
+    `;
+
+    container.appendChild(empty);
+}
+
 function renderMatches() {
 
-    const containers = [
-        document.getElementById("matches-container"),
-        document.getElementById("latest-matches")
-    ];
+    const allContainer = document.getElementById("matches-container");
+    const homeContainer = document.getElementById("latest-matches");
 
-    const sortedMatches = [...matches].sort(
-        (a, b) => new Date(a.kickoff) - new Date(b.kickoff)
-    );
+    if (allContainer) {
 
-    /*
-        Beranda: 5 pertandingan yang waktunya paling dekat
-        dengan sekarang, ditampilkan berurutan.
-    */
-    const now = Date.now();
-
-    const homeMatches = [...matches]
-        .sort((a, b) =>
-            Math.abs(new Date(a.kickoff) - now) -
-            Math.abs(new Date(b.kickoff) - now)
-        )
-        .slice(0, 5)
-        .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
-
-    containers.forEach(container => {
-
-        if (!container) return;
-
-        container.replaceChildren();
+        allContainer.replaceChildren();
 
         if (!matches.length) {
+            appendEmpty(allContainer, "📅", "Belum ada pertandingan.");
+        } else {
+            [...matches]
+                .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff))
+                .forEach(match => {
+                    allContainer.appendChild(createMatchElement(match));
+                });
+        }
+    }
 
-            const empty = document.createElement("div");
-            empty.className = "empty";
-            empty.innerHTML = `
-                <div class="empty-icon">⚽</div>
-                Belum ada pertandingan.
-            `;
+    if (homeContainer) {
 
-            container.appendChild(empty);
+        homeContainer.replaceChildren();
 
+        if (!matches.length) {
+            appendEmpty(homeContainer, "⚽", "Belum ada pertandingan.");
+        } else {
+            renderHomeMatches(homeContainer);
+        }
+    }
+
+    renderNextMatch();
+}
+
+/* Beranda: hari ini sampai HOME_DAYS_AHEAD hari ke depan, per tanggal */
+function renderHomeMatches(container) {
+
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + HOME_DAYS_AHEAD + 1);
+
+    const upcoming = matches
+        .filter(match => {
+            const time = new Date(match.kickoff);
+            return !Number.isNaN(time.getTime()) && time >= start && time < end;
+        })
+        .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
+
+    if (!upcoming.length) {
+        appendEmpty(
+            container,
+            "📅",
+            `Tidak ada pertandingan dalam ${HOME_DAYS_AHEAD} hari ke depan.`
+        );
+        return;
+    }
+
+    const todayKey = start.toDateString();
+
+    let currentKey = "";
+
+    upcoming.forEach(match => {
+
+        const date = new Date(match.kickoff);
+        const key = date.toDateString();
+
+        if (key !== currentKey) {
+
+            currentKey = key;
+
+            const heading = document.createElement("div");
+            heading.className = "day-heading";
+
+            heading.textContent = date.toLocaleDateString("id-ID", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            });
+
+            if (key === todayKey) {
+                const badge = document.createElement("span");
+                badge.textContent = "HARI INI";
+                heading.appendChild(badge);
+            }
+
+            container.appendChild(heading);
+        }
+
+        container.appendChild(createMatchElement(match));
+    });
+}
+
+/* Kartu "Pertandingan Berikutnya" + hitung mundur */
+let nextMatchTimer = null;
+
+function renderNextMatch() {
+
+    const box = document.getElementById("next-match");
+
+    if (!box) return;
+
+    clearInterval(nextMatchTimer);
+
+    const now = Date.now();
+
+    const next = matches
+        .filter(match =>
+            match.status !== "finished" &&
+            new Date(match.kickoff).getTime() > now
+        )
+        .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff))[0];
+
+    if (!next) {
+        box.style.display = "none";
+        return;
+    }
+
+    box.style.display = "block";
+
+    const homeName = getClubById(next.home_club_id)?.name || "Klub Kandang";
+    const awayName = getClubById(next.away_club_id)?.name || "Klub Tandang";
+
+    document.getElementById("next-match-teams").textContent =
+        `${homeName} vs ${awayName}`;
+
+    document.getElementById("next-match-meta").textContent =
+        `${formatMatchDate(next.kickoff)} • ` +
+        `${formatMatchTime(next.kickoff)} • ` +
+        `${next.venue || "-"}`;
+
+    const target = new Date(next.kickoff).getTime();
+
+    function tick() {
+
+        const diff = target - Date.now();
+
+        if (diff <= 0) {
+            renderNextMatch();
             return;
         }
 
-        const list =
-            container.id === "latest-matches"
-                ? homeMatches
-                : sortedMatches;
+        const totalSeconds = Math.floor(diff / 1000);
 
-        list.forEach(match => {
-            container.appendChild(createMatchElement(match));
-        });
-    });
+        document.getElementById("cd-days").textContent =
+            Math.floor(totalSeconds / 86400);
+
+        document.getElementById("cd-hours").textContent =
+            Math.floor((totalSeconds % 86400) / 3600);
+
+        document.getElementById("cd-mins").textContent =
+            Math.floor((totalSeconds % 3600) / 60);
+
+        document.getElementById("cd-secs").textContent =
+            totalSeconds % 60;
+    }
+
+    tick();
+
+    nextMatchTimer = setInterval(tick, 1000);
 }
+
+function setTournamentLogo() {
+
+    const img = document.getElementById("tournament-logo");
+
+    if (!img) return;
+
+    img.onerror = () => {
+        img.style.display = "none";
+    };
+
+    img.src = TOURNAMENT_LOGO_URL;
+}
+
 function createMatchElement(match) {
 
     const homeClub = getClubById(match.home_club_id);
@@ -4901,7 +5179,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     initializeAppwrite();
-
+    setTournamentLogo();
     await checkAdminSession();
 
     await loadClubs();
