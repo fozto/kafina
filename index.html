@@ -3443,7 +3443,7 @@ const APPWRITE_CONFIG = {
 
 const MATCH_STAGE_FIELD = "Stage";
 const TOURNAMENT_LOGO_URL =
-    "https://res.cloudinary.com/dmecuyazc/image/upload/v1792785206/kafina_cup_altodz.png;"
+    "https://res.cloudinary.com/dmecuyazc/image/upload/v1792785206/kafina_cup_altodz.png";
 const HOME_DAYS_AHEAD = 14;
 const KNOCKOUT_STAGES = ["Semifinal 1", "Semifinal 2", "Final"];
 
@@ -4500,7 +4500,7 @@ async function saveMatch(event) {
         home_score: homeScore,
         away_score: awayScore,
         home_penalty_score: homePen,
-        away_penalty_scorealty_scorealty_score: awayPen
+        away_penalty_score
     };
 
     /* ---------- SIMPAN ---------- */
@@ -4903,9 +4903,9 @@ function createMatchElement(match) {
     if (
         isFinished &&
         match.home_penalty_score != null &&
-        match.away_penalty_scorealty_scorealty_score != null
+        match.away_penalty_score != null
     ) {
-        scoreCaption = `PEN ${match.home_penalty_score}-${match.away_penalty_scorealty_scorealty_score}`;
+        scoreCaption = `PEN ${match.home_penalty_score}-${match.away_penalty_score}`;
     }
 
     const stage = getMatchStage(match);
@@ -5076,7 +5076,7 @@ function editMatch(matchId) {
         match.home_penalty_score ?? "";
 
     document.getElementById("away-pen").value =
-        match.away_penalty_scorealty_scorealty_score ?? "";
+        match.away_penalty_score ?? "";
 
     document.getElementById("match-modal").classList.add("show");
 }
@@ -5544,10 +5544,10 @@ function getMatchWinnerId(match) {
     if (home > away) return match.home_club_id;
     if (away > home) return match.away_club_id;
 
-    if (match.home_penalty_score != null && match.away_penalty_scorealty_scorealty_score != null) {
+    if (match.home_penalty_score != null && match.away_penalty_score != null) {
 
-        if (match.home_penalty_score > match.away_penalty_scorealty_scorealty_score) return match.home_club_id;
-        if (match.away_penalty_scorealty_scorealty_score > match.home_penalty_score) return match.away_club_id;
+        if (match.home_penalty_score > match.away_penalty_score) return match.home_club_id;
+        if (match.away_penalty_score > match.home_penalty_score) return match.away_club_id;
     }
 
     return null;
@@ -5627,8 +5627,8 @@ function buildKnockoutCard(stage, title, slots) {
 
             scores = [match.home_score ?? 0, match.away_score ?? 0];
 
-            if (match.home_penalty_score != null && match.away_penalty_scorealty_scorealty_score != null) {
-                pens = [match.home_penalty_score, match.away_penalty_scorealty_scorealty_score];
+            if (match.home_penalty_score != null && match.away_penalty_score != null) {
+                pens = [match.home_penalty_score, match.away_penalty_score];
             }
 
             winnerId = getMatchWinnerId(match);
