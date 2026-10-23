@@ -2913,6 +2913,7 @@ SIMPAN KLUB
 
 </form>
 
+</div>
 
 </div>
 <div id="match-modal" class="modal">
@@ -3722,7 +3723,6 @@ async function loadClubs() {
         renderMatchStandings();
         renderTopScorers();
         renderKnockout();
-        renderKnockout();
 
     } catch (error) {
 
@@ -4024,9 +4024,7 @@ function populateMatchClubOptions() {
     fillSelect(homeSelect, "Pilih klub kandang");
     fillSelect(awaySelect, "Pilih klub tandang");
 }
-/* =========================================================
-   SAVE MATCH
-=================
+
 async function saveMatch(event) {
 
     event.preventDefault();
@@ -4277,6 +4275,7 @@ async function loadMatches() {
         renderMatchStandings();
         updateMatchStats();
         renderTopScorers();
+        renderKnockout();
 
     } catch (error) {
 
