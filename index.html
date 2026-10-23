@@ -1452,7 +1452,117 @@ h3,
     padding: 8px 10px;
     font-size: 12px;
 }
+/* ===== TOP SKOR ===== */
 
+.scorers {
+    display: grid;
+    gap: 10px;
+}
+
+.scorer {
+    display: grid;
+    grid-template-columns: 44px 56px 1fr auto;
+    align-items: center;
+    gap: 14px;
+
+    background: linear-gradient(145deg, #081910, #041009);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+
+    transition: .2s;
+}
+
+.scorer:hover {
+    border-color: rgba(34,197,94,.35);
+    transform: translateY(-1px);
+}
+
+.scorer-rank {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--muted);
+    text-align: center;
+}
+
+.scorer.top1 .scorer-rank { color: #facc15; }
+.scorer.top2 .scorer-rank { color: #cbd5e1; }
+.scorer.top3 .scorer-rank { color: #d97706; }
+
+.scorer.top1 {
+    border-color: rgba(250,204,21,.35);
+    background:
+        radial-gradient(circle at 0% 50%, rgba(250,204,21,.08), transparent 40%),
+        linear-gradient(145deg, #081910, #041009);
+}
+
+.scorer-logo {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+}
+
+.scorer-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 0;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.55));
+}
+
+.scorer-name {
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.scorer-name small {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.scorer-club {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.scorer-goals {
+    text-align: center;
+    min-width: 48px;
+}
+
+.scorer-goals strong {
+    display: block;
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--green-soft);
+    line-height: 1;
+}
+
+.scorer-goals small {
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+@media (max-width: 650px) {
+    .scorer {
+        grid-template-columns: 34px 46px 1fr auto;
+        gap: 10px;
+        padding: 10px 12px;
+    }
+
+    .scorer-logo {
+        width: 42px;
+        height: 42px;
+    }
+}
 </style>
 </head>
 
@@ -1533,6 +1643,13 @@ h3,
         onclick="showPage('knockout', this)"
     >
         Knockout
+    </button>
+
+        <button
+        class="nav-button"
+        onclick="showPage('topscorers', this)"
+    >
+        Top Skor
     </button>
 
     <button
@@ -2307,6 +2424,31 @@ Grup B
 <!-- =========================================================
      RULES
 ========================================================= -->
+
+<!-- =========================================================
+     TOP SCORERS
+========================================================= -->
+
+<section
+    id="page-topscorers"
+    class="page"
+>
+
+<div class="section-title">
+    <div>
+        <h2>Top Skor</h2>
+        <p>Pencetak gol terbanyak KAFINA CUP</p>
+    </div>
+</div>
+
+<div id="topscorers-container" class="scorers">
+    <div class="empty">
+        <div class="empty-icon">🥇</div>
+        Belum ada gol tercatat.
+    </div>
+</div>
+
+</section>
 
 <section
     id="page-rules"
@@ -3365,6 +3507,7 @@ async function loadClubs() {
         /* Nama & logo klub dipakai di pertandingan dan klasemen */
         renderMatches();
         renderMatchStandings();
+        renderTopScorers();
 
     } catch (error) {
 
@@ -3849,6 +3992,7 @@ async function loadMatches() {
         renderMatches();
         renderMatchStandings();
         updateMatchStats();
+        renderTopScorers();
 
     } catch (error) {
 
@@ -4209,6 +4353,7 @@ async function loadEvents() {
     try {
         matchEvents = await listAllRows(APPWRITE_CONFIG.eventsTableId);
         renderMatches();
+        renderTopScorers();
     } catch (error) {
         console.error("Gagal mengambil kejadian:", error);
         showToast("Gagal memuat kejadian pertandingan.");
@@ -4437,6 +4582,137 @@ async function deleteEvent(eventId) {
 }
 
 /* =========================================================
+   TOP SKOR
+========================================================= */
+
+const TOP_SCORERS_LIMIT = 10;
+
+function calculateTopScorers() {
+
+    const matchIds = new Set(matches.map(match => match.$id));
+
+    const scorers = {};
+
+    matchEvents.forEach(ev => {
+
+        /* Hanya gol biasa dan penalti; gol bunuh diri tidak dihitung */
+        if (ev.event_type !== "goal" && ev.event_type !== "penalty") return;
+
+        /* Abaikan kejadian dari pertandingan yang sudah dihapus */
+        if (!matchIds.has(ev.match_id)) return;
+
+        const name = String(ev.player_name || "").trim();
+
+        if (!name) return;
+
+        const key = `${ev.club_id}|${name.toLowerCase()}`;
+
+        if (!scorers[key]) {
+            scorers[key] = {
+                name: name,
+                clubId: ev.club_id,
+                goals: 0,
+                penalties: 0
+            };
+        }
+
+        scorers[key].goals++;
+
+        if (ev.event_type === "penalty") {
+            scorers[key].penalties++;
+        }
+    });
+
+    return Object.values(scorers).sort((a, b) => {
+
+        if (b.goals !== a.goals) return b.goals - a.goals;
+
+        if (a.penalties !== b.penalties) return a.penalties - b.penalties;
+
+        return a.name.localeCompare(b.name);
+    });
+}
+
+function renderTopScorers() {
+
+    const container = document.getElementById("topscorers-container");
+
+    if (!container) return;
+
+    container.replaceChildren();
+
+    const list = calculateTopScorers().slice(0, TOP_SCORERS_LIMIT);
+
+    if (!list.length) {
+
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.innerHTML = `
+            <div class="empty-icon">🥇</div>
+            Belum ada gol tercatat.
+        `;
+
+        container.appendChild(empty);
+
+        return;
+    }
+
+    let rank = 0;
+    let previous = null;
+
+    list.forEach((player, index) => {
+
+        /* Peringkat sama kalau gol dan penalti sama */
+        if (
+            !previous ||
+            previous.goals !== player.goals ||
+            previous.penalties !== player.penalties
+        ) {
+            rank = index + 1;
+        }
+
+        previous = player;
+
+        const club = getClubById(player.clubId);
+        const clubName = club?.name || "Klub";
+        const logoUrl = club?.logo_url || "";
+
+        const row = document.createElement("div");
+        row.className = "scorer" + (rank <= 3 ? ` top${rank}` : "");
+
+        const penaltyNote = player.penalties
+            ? ` <small>(${player.penalties} pen)</small>`
+            : "";
+
+        row.innerHTML = `
+            <div class="scorer-rank">${rank}</div>
+
+            <div class="scorer-logo">
+                ${
+                    logoUrl
+                        ? `<img src="${escapeHtml(logoUrl)}"
+                               alt="${escapeHtml(clubName)}"
+                               onerror="this.replaceWith(document.createTextNode('⚽'))">`
+                        : "⚽"
+                }
+            </div>
+
+            <div>
+                <div class="scorer-name">${escapeHtml(player.name)}${penaltyNote}</div>
+                <div class="scorer-club">${escapeHtml(clubName)}</div>
+            </div>
+
+            <div class="scorer-goals">
+                <strong>${player.goals}</strong>
+                <small>Gol</small>
+            </div>
+        `;
+
+        container.appendChild(row);
+    });
+}
+
+/* =========================================================
    MATCH STATS
 ========================================================= */
 
@@ -4540,6 +4816,7 @@ function sortStandings(standings) {
 
 function renderMatchStandings() {
 
+      renderTopScorers();
     const rows = calculateStandings(clubs, matches);
 
     ["A", "B"].forEach(group => {
