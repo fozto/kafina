@@ -4276,6 +4276,61 @@ function appendEmpty(container, icon, text) {
     container.appendChild(empty);
 }
 
+const matchFilter = { status: "all", group: "all" };
+
+function setMatchFilter(type, value) {
+
+    matchFilter[type] = value;
+
+    document
+        .querySelectorAll(`#filter-${type} .chip`)
+        .forEach(chip => {
+            chip.classList.toggle("active", chip.dataset.value === value);
+        });
+
+    renderMatches();
+}
+
+function getFilteredMatches() {
+
+    const list = matches.filter(match => {
+
+        if (
+            matchFilter.status !== "all" &&
+            match.status !== matchFilter.status
+        ) {
+            return false;
+        }
+
+        if (
+            matchFilter.group !== "all" &&
+            (match.group_name || "") !== matchFilter.group
+        ) {
+            return false;
+        }
+
+        return true;
+    });
+
+    /* Selesai: terbaru di atas. Lainnya: terdekat di atas. */
+    const direction = matchFilter.status === "finished" ? -1 : 1;
+
+    return list.sort((a, b) =>
+        direction * (new Date(a.kickoff) - new Date(b.kickoff))
+    );
+}
+
+function updateMatchCount(count) {
+
+    const element = document.getElementById("match-count");
+
+    if (!element) return;
+
+    element.textContent = count
+        ? `${count} pertandingan`
+        : "";
+}
+
 function renderMatches() {
 
     const allContainer = document.getElementById("matches-container");
