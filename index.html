@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
 
 <title>KAFINA CUP</title>
+<meta name="theme-color" content="#040a1f">
+<link rel="icon" type="image/png" href="https://res.cloudinary.com/dmecuyazc/image/upload/w_64/v1792785206/kafina_cup_altodz.png">
 <style>
 /* =========================================================
    KAFINA CUP
@@ -2452,6 +2454,329 @@ td.pts {
     *, *::before, *::after {
         animation: none !important;
         transition: none !important;
+    }
+}
+/* =========================================================
+   TEMA LOGO: EMAS • NAVY • BIRU • HIJAU
+========================================================= */
+
+:root {
+    --bg: #040a1f;
+    --bg-2: #071230;
+    --card: #0a1840;
+    --card-2: #0d1f52;
+
+    /* Nama --green-* dipertahankan supaya seluruh CSS lama ikut berubah,
+       tetapi isinya sekarang warna EMAS dari logo. */
+    --green: #b9770e;
+    --green-dark: #7a4c06;
+    --green-light: #f2b01e;
+    --green-soft: #ffd45e;
+
+    --gold: #f2b01e;
+    --gold-soft: #ffd45e;
+    --royal: #2457c5;
+    --pitch: #1f9d4b;
+    --pitch-soft: #3ddc7a;
+
+    --text: #f4f6ff;
+    --text-2: #cdd6f4;
+    --muted: #8b9ac8;
+
+    --border: #1a2f6b;
+    --border-light: #2a4797;
+
+    --panel: linear-gradient(145deg, #0c1c4a, #071233);
+    --glow: 0 0 0 1px rgba(242,176,30,.32), 0 12px 40px rgba(242,176,30,.12);
+}
+
+::selection { background: rgba(242,176,30,.35); color: #fff; }
+
+html { scrollbar-color: #2a4797 #040a1f; }
+::-webkit-scrollbar-track { background: #040a1f; }
+::-webkit-scrollbar-thumb { background: #2a4797; }
+::-webkit-scrollbar-thumb:hover { background: #3a5fc0; }
+
+body {
+    background:
+        radial-gradient(900px 520px at 85% -10%, rgba(36,87,197,.30), transparent 60%),
+        radial-gradient(700px 520px at -10% 110%, rgba(31,157,75,.14), transparent 60%),
+        radial-gradient(520px 300px at 50% 0%, rgba(242,176,30,.07), transparent 70%),
+        var(--bg);
+    background-attachment: fixed;
+}
+
+/* ----- Header & navigasi ----- */
+
+header {
+    background: linear-gradient(135deg, rgba(3,8,26,.94), rgba(8,20,64,.94), rgba(10,28,84,.94));
+    border-bottom: 1px solid rgba(242,176,30,.22);
+}
+
+/* Garis warna logo: hijau - emas - biru */
+header::after {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #1f9d4b, #f2b01e, #2457c5, transparent);
+    opacity: .9;
+}
+
+.brand-logo {
+    background: linear-gradient(135deg, #0d2260, #071233);
+    border-color: rgba(242,176,30,.35);
+    box-shadow: inset 0 0 20px rgba(242,176,30,.08);
+}
+
+/* Logo turnamen berbentuk tegak (perisai) */
+.brand-logo.has-logo {
+    width: 34px;
+    height: 48px;
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+.brand-logo img { filter: drop-shadow(0 4px 12px rgba(242,176,30,.45)); }
+
+.brand h1 { background: linear-gradient(90deg, #ffffff, #ffd45e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.admin-button {
+    background: rgba(242,176,30,.10);
+    border-color: rgba(242,176,30,.45);
+    color: var(--gold-soft);
+}
+
+.admin-button:hover {
+    background: rgba(242,176,30,.20);
+    border-color: var(--gold);
+    box-shadow: 0 0 22px rgba(242,176,30,.30);
+}
+
+nav { background: rgba(4,10,31,.96); }
+
+.nav-button.active { text-shadow: 0 0 18px rgba(255,212,94,.55); }
+
+/* ----- Hero ----- */
+
+.hero {
+    background:
+        radial-gradient(circle at 88% 15%, rgba(242,176,30,.18), transparent 30%),
+        radial-gradient(circle at 8% 100%, rgba(31,157,75,.16), transparent 35%),
+        linear-gradient(135deg, #040a26, #0a1c5a 60%, #0e2a78);
+    border-color: rgba(242,176,30,.28);
+}
+
+.hero::before {
+    background: radial-gradient(circle, rgba(242,176,30,.22), transparent 65%);
+}
+
+.hero h2 { background: linear-gradient(90deg, #ffffff 25%, #ffd45e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.hero p { color: #c3cdf0; }
+
+.hero-logo {
+    width: auto;
+    height: 200px;
+    max-width: 150px;
+    filter: drop-shadow(0 10px 28px rgba(242,176,30,.38));
+}
+
+.countdown div {
+    background: rgba(4,10,31,.62);
+    border-color: rgba(242,176,30,.28);
+}
+
+/* ----- Permukaan kartu ----- */
+
+.card, .stat, .match, .knockout-match, .club-card,
+.scorer, .rule-article, .format-tile, .admin-card {
+    background: var(--panel);
+}
+
+.stat::before {
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.stats .stat:last-child .stat-value { color: var(--pitch-soft); }
+
+.match::before { background: linear-gradient(var(--gold-soft), transparent); }
+
+.match:hover, .scorer:hover, .rule-article:hover,
+.club-card:hover, .knockout-match:hover, .stat:hover {
+    border-color: rgba(242,176,30,.45);
+}
+
+.score {
+    background: rgba(4,10,31,.65);
+    border-color: var(--border-light);
+}
+
+.stage-badge {
+    background: rgba(242,176,30,.14);
+    color: var(--gold-soft);
+}
+
+.club-card::before {
+    background: radial-gradient(circle at 50% 0%, rgba(242,176,30,.16), transparent 62%);
+}
+
+.club-card p {
+    background: rgba(242,176,30,.14);
+    color: var(--gold-soft);
+}
+
+.scorer.top1 {
+    background:
+        radial-gradient(circle at 0% 50%, rgba(242,176,30,.12), transparent 40%),
+        var(--panel);
+}
+
+.knockout-team.winner { background: rgba(242,176,30,.12); }
+
+.champion-card {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(242,176,30,.20), transparent 62%),
+        var(--panel);
+    border-color: rgba(242,176,30,.38);
+}
+
+/* ----- Tabel & klasemen ----- */
+
+th, .knockout-title { background: #0c1d52; }
+
+tbody tr:hover { background: rgba(36,87,197,.16); }
+
+/* Zona lolos tetap hijau (warna lapangan di logo) */
+tr.qualified {
+    background: linear-gradient(90deg, rgba(31,157,75,.22), rgba(31,157,75,.04));
+}
+
+tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
+
+.day-heading { border-left-color: var(--pitch-soft); }
+
+/* ----- Tombol & chip ----- */
+
+.button-primary {
+    background: linear-gradient(135deg, #ffd45e, #f2b01e 55%, #d98f0b);
+    color: #0a1440;
+    box-shadow: 0 6px 20px rgba(242,176,30,.28);
+}
+
+.button-primary:hover {
+    background: linear-gradient(135deg, #ffe08a, #f6bb2d 55%, #e39a10);
+    box-shadow: 0 10px 28px rgba(242,176,30,.42);
+}
+
+.button-secondary { background: #0c1d52; }
+
+.btn-edit { background: #2457c5; }
+
+.chip {
+    background: rgba(36,87,197,.14);
+    border-color: var(--border-light);
+}
+
+.chip:hover { border-color: var(--gold); color: var(--gold-soft); }
+
+.chip.active {
+    background: linear-gradient(135deg, #ffd45e, #f2b01e);
+    border-color: #ffd45e;
+    color: #0a1440;
+    box-shadow: 0 6px 18px rgba(242,176,30,.30);
+}
+
+/* ----- Modal, form, toast ----- */
+
+.modal { background: rgba(2,5,20,.82); }
+
+.modal-box {
+    background: linear-gradient(145deg, #0c1c4a, #050d2a);
+    border-color: rgba(242,176,30,.30);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea { background: #050d2a; }
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(242,176,30,.16);
+}
+
+.form-group input::placeholder { color: #5d6da3; }
+
+.logo-upload { background: rgba(36,87,197,.08); }
+
+.logo-preview { background: #050d2a; }
+
+.upload-button { background: #0c1d52; }
+
+.upload-button:hover { background: #12297a; }
+
+.event-admin-item { background: #050d2a; }
+
+.toast {
+    background: #0a1840;
+    border-left-color: var(--gold);
+}
+
+/* ----- Layar kecil ----- */
+
+@media (max-width: 650px) {
+
+    .hero-logo {
+        height: 150px;
+        max-width: 110px;
+    }
+}
+/* ===== KLASEMEN DI HP ===== */
+
+@media (max-width: 650px) {
+
+    .groups .card {
+        padding: 14px 10px;
+    }
+
+    .groups table {
+        min-width: 0;
+    }
+
+    .groups th,
+    .groups td {
+        padding: 10px 4px;
+        font-size: 12px;
+    }
+
+    .groups .club-cell {
+        gap: 6px;
+    }
+
+    .groups .rank-no {
+        width: 12px;
+        font-size: 11px;
+    }
+
+    .groups .mini-logo {
+        width: 26px;
+        height: 26px;
+    }
+
+    /* Nama klub panjang dipotong dengan "..." */
+    .groups .club-cell span:last-child {
+        max-width: 105px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Sembunyikan kolom GM (6) dan GK (7); SG tetap tampil */
+    .groups th:nth-child(6),
+    .groups td:nth-child(6),
+    .groups th:nth-child(7),
+    .groups td:nth-child(7) {
+        display: none;
     }
 }
 </style>
