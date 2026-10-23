@@ -1956,6 +1956,504 @@ h3,
         padding: 14px;
     }
 }
+/* =========================================================
+   POLES TAMPILAN
+========================================================= */
+
+:root {
+    --glow: 0 0 0 1px rgba(34,197,94,.25), 0 12px 40px rgba(34,197,94,.12);
+    --ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+::selection {
+    background: rgba(34,197,94,.35);
+    color: #fff;
+}
+
+html {
+    scrollbar-width: thin;
+    scrollbar-color: #14452b #020806;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #020806; }
+::-webkit-scrollbar-thumb { background: #14452b; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #1d6b40; }
+
+body {
+    background:
+        radial-gradient(900px 500px at 85% -10%, rgba(34,197,94,.14), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(22,101,52,.18), transparent 60%),
+        var(--bg);
+    background-attachment: fixed;
+}
+
+/* ----- Muncul saat scroll ----- */
+
+.reveal { opacity: 0; }
+
+.reveal.in-view {
+    opacity: 1;
+    animation: revealUp .65s var(--ease) both;
+}
+
+@keyframes revealUp {
+    from { opacity: 0; transform: translateY(22px) scale(.985); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ----- Transisi halaman ----- */
+
+.page.active { animation: pageIn .45s var(--ease); }
+
+@keyframes pageIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ----- Header & navigasi ----- */
+
+header {
+    background: linear-gradient(135deg, rgba(1,6,4,.92), rgba(3,21,11,.92), rgba(5,46,22,.92));
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(34,197,94,.18);
+}
+
+header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(74,222,128,.7), transparent);
+    opacity: .6;
+}
+
+.brand-logo.has-logo {
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+.brand-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 12px rgba(34,197,94,.45));
+}
+
+.brand h1 {
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #ffffff, #a7f3c3);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.admin-button {
+    border-radius: 999px;
+    padding: 9px 20px;
+    letter-spacing: .5px;
+}
+
+.admin-button:hover {
+    box-shadow: 0 0 22px rgba(34,197,94,.25);
+}
+
+.nav-button.active {
+    text-shadow: 0 0 18px rgba(74,222,128,.55);
+}
+
+/* ----- Judul bagian ----- */
+
+.section-title h2 {
+    position: relative;
+    padding-left: 14px;
+}
+
+.section-title h2::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12%;
+    bottom: 12%;
+    width: 4px;
+    border-radius: 4px;
+    background: linear-gradient(var(--green-soft), var(--green));
+}
+
+/* ----- Hero ----- */
+
+.hero {
+    padding: 46px;
+    border-radius: 26px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.hero::before {
+    content: "";
+    position: absolute;
+    top: -40%;
+    right: -8%;
+    width: 520px;
+    height: 520px;
+    background: radial-gradient(circle, rgba(74,222,128,.22), transparent 65%);
+    filter: blur(10px);
+    pointer-events: none;
+    animation: heroGlow 7s ease-in-out infinite alternate;
+}
+
+@keyframes heroGlow {
+    from { transform: translate(0, 0) scale(1);       opacity: .7; }
+    to   { transform: translate(-40px, 30px) scale(1.15); opacity: 1; }
+}
+
+.hero h2 {
+    background: linear-gradient(90deg, #ffffff 30%, #86efac);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.hero-logo {
+    width: 150px;
+    height: 150px;
+    animation: floatLogo 5s ease-in-out infinite;
+}
+
+@keyframes floatLogo {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+}
+
+.countdown div {
+    backdrop-filter: blur(6px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* ----- Statistik ----- */
+
+.stat {
+    position: relative;
+    overflow: hidden;
+    transition: .3s var(--ease);
+}
+
+.stat::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--green-light), transparent);
+    opacity: .6;
+}
+
+.stat:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--glow);
+}
+
+.stat-value { font-family: var(--font-heading); }
+
+/* ----- Pertandingan ----- */
+
+.match {
+    position: relative;
+    overflow: hidden;
+    padding: 18px;
+    border-radius: 18px;
+    transition: .3s var(--ease);
+}
+
+.match::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(var(--green-soft), transparent);
+    opacity: 0;
+    transition: .3s;
+}
+
+.match:hover {
+    transform: translateY(-3px);
+    border-color: rgba(34,197,94,.45);
+    box-shadow: var(--glow);
+}
+
+.match:hover::before { opacity: 1; }
+
+.teams { grid-template-columns: 1fr 92px 1fr; }
+
+.team-logo {
+    width: 54px;
+    height: 54px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+    font-size: 28px;
+}
+
+.team-logo img {
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,.6));
+    transition: transform .3s var(--ease);
+}
+
+.match:hover .team-logo img { transform: scale(1.12) rotate(-3deg); }
+
+.score {
+    font-family: var(--font-heading);
+    font-size: 26px;
+    padding: 8px 6px;
+    border-radius: 12px;
+    background: rgba(2,8,6,.6);
+    border: 1px solid var(--border-light);
+    white-space: nowrap;
+}
+
+/* ----- Klasemen ----- */
+
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+th {
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    font-size: 10px;
+}
+
+tbody tr { transition: background .2s; }
+
+tbody tr:hover { background: rgba(34,197,94,.07); }
+
+tr.qualified {
+    background: linear-gradient(90deg, rgba(34,197,94,.14), rgba(34,197,94,.03));
+}
+
+tr.qualified td:first-child {
+    box-shadow: inset 3px 0 0 var(--green-light);
+}
+
+.club-cell { gap: 10px; }
+
+.rank-no {
+    width: 18px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mini-logo {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+    font-size: 20px;
+}
+
+.mini-logo img { filter: drop-shadow(0 3px 6px rgba(0,0,0,.55)); }
+
+td.pts {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--green-soft);
+}
+
+/* ----- Klub ----- */
+
+.club-card {
+    position: relative;
+    overflow: hidden;
+    padding: 28px 18px 22px;
+    border-radius: 20px;
+    transition: .35s var(--ease);
+}
+
+.club-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(34,197,94,.16), transparent 62%);
+    opacity: .6;
+    transition: .35s;
+}
+
+.club-card > * { position: relative; }
+
+.club-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 50px rgba(0,0,0,.4), var(--glow);
+}
+
+.club-card:hover::before { opacity: 1; }
+
+.club-card .club-logo {
+    width: 112px;
+    height: 112px;
+    margin-bottom: 16px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+    font-size: 46px;
+    transition: transform .4s var(--ease);
+}
+
+.club-card .club-logo img {
+    border-radius: 0;
+    filter: drop-shadow(0 12px 18px rgba(0,0,0,.55));
+}
+
+.club-card:hover .club-logo { transform: scale(1.08) translateY(-3px); }
+
+.club-card h3 { font-size: 16px; letter-spacing: .3px; }
+
+.club-card p {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: rgba(34,197,94,.12);
+    color: var(--green-soft);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.logo-preview { border-radius: 20px; }
+
+/* ----- Top skor & knockout ----- */
+
+.scorer { border-radius: 16px; }
+
+.scorer:hover { box-shadow: var(--glow); }
+
+.scorer.top1 { box-shadow: 0 0 30px rgba(250,204,21,.08); }
+
+.knockout-match {
+    border-radius: 16px;
+    transition: .3s var(--ease);
+}
+
+.knockout-match:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--glow);
+}
+
+.knockout-title { letter-spacing: 1px; }
+
+.champion-card {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(250,204,21,.14), transparent 62%),
+        linear-gradient(145deg, rgba(10,28,18,.96), rgba(4,15,9,.98));
+    border-color: rgba(250,204,21,.25);
+}
+
+.champion-logo { animation: floatLogo 5s ease-in-out infinite; }
+
+/* ----- Tombol, chip, modal, toast ----- */
+
+.button-primary {
+    box-shadow: 0 6px 20px rgba(22,163,74,.25);
+    transition: .25s var(--ease);
+}
+
+.button-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(34,197,94,.35);
+}
+
+.btn-edit,
+.btn-delete {
+    border-radius: 8px;
+    transition: .2s var(--ease);
+}
+
+.btn-edit:hover,
+.btn-delete:hover { transform: translateY(-1px); }
+
+.chip.active { box-shadow: 0 6px 18px rgba(34,197,94,.28); }
+
+.modal-box { animation: popIn .3s var(--ease); }
+
+@keyframes popIn {
+    from { opacity: 0; transform: translateY(14px) scale(.96); }
+    to   { opacity: 1; transform: none; }
+}
+
+.toast {
+    border-left: 3px solid var(--green-light);
+    backdrop-filter: blur(10px);
+}
+
+/* ----- Footer ----- */
+
+.site-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 34px 20px 40px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.site-footer strong {
+    font-family: var(--font-heading);
+    color: var(--text-2);
+    letter-spacing: 2px;
+}
+
+/* ----- Penyesuaian layar kecil ----- */
+
+@media (max-width: 650px) {
+
+    .hero { padding: 28px 20px; }
+
+    .hero-logo {
+        width: 110px;
+        height: 110px;
+    }
+
+    .teams { grid-template-columns: 1fr 76px 1fr; }
+
+    .score {
+        font-size: 20px;
+        padding: 6px 4px;
+    }
+
+    .team-logo {
+        width: 46px;
+        height: 46px;
+    }
+
+    .club-card .club-logo {
+        width: 84px;
+        height: 84px;
+    }
+}
+
+/* ----- Hormati pengaturan "kurangi gerakan" ----- */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
 </style>
 </head>
 
@@ -3016,6 +3514,10 @@ puncak.
 
 </main>
 
+<footer class="site-footer">
+    <strong>KAFINA CUP</strong>
+    <span>Football Competition</span>
+</footer>
 
 <!-- =========================================================
      ADMIN LOGIN MODAL
@@ -4870,16 +5372,35 @@ function renderNextMatch() {
 function setTournamentLogo() {
 
     const img = document.getElementById("tournament-logo");
+    const brand = document.querySelector(".brand-logo");
 
-    if (!img) return;
+    if (img) {
 
-    img.onerror = () => {
-        img.style.display = "none";
-    };
+        img.onerror = () => {
+            img.style.display = "none";
+        };
 
-    img.src = TOURNAMENT_LOGO_URL;
+        img.src = TOURNAMENT_LOGO_URL;
+    }
+
+    /* Logo di header: tulisan "KC" diganti logo kalau gambarnya berhasil dimuat */
+    if (brand) {
+
+        const probe = new Image();
+
+        probe.onload = () => {
+
+            const logo = document.createElement("img");
+            logo.src = TOURNAMENT_LOGO_URL;
+            logo.alt = "KAFINA CUP";
+
+            brand.replaceChildren(logo);
+            brand.classList.add("has-logo");
+        };
+
+        probe.src = TOURNAMENT_LOGO_URL;
+    }
 }
-
 
 function createMatchElement(match) {
 
@@ -5850,6 +6371,7 @@ function sortStandings(standings) {
     });
 }
 
+
 function renderMatchStandings() {
 
     const rows = calculateStandings(clubs, matches);
@@ -5890,8 +6412,46 @@ function renderMatchStandings() {
                 tr.className = "qualified";
             }
 
-            const values = [
-                team.name,
+            /* Kolom klub: nomor, logo, nama */
+            const clubTd = document.createElement("td");
+            const cell = document.createElement("div");
+            cell.className = "club-cell";
+
+            const rank = document.createElement("span");
+            rank.className = "rank-no";
+            rank.textContent = index + 1;
+
+            const logo = document.createElement("span");
+            logo.className = "mini-logo";
+
+            const club = getClubById(team.id);
+
+            if (club?.logo_url) {
+
+                const img = document.createElement("img");
+                img.src = club.logo_url;
+                img.alt = "";
+
+                img.onerror = () => {
+                    logo.textContent = "⚽";
+                };
+
+                logo.appendChild(img);
+
+            } else {
+
+                logo.textContent = "⚽";
+            }
+
+            const name = document.createElement("span");
+            name.textContent = team.name;
+
+            cell.append(rank, logo, name);
+            clubTd.appendChild(cell);
+            tr.appendChild(clubTd);
+
+            /* Kolom angka: M, W, D, L, GM, GK, SG, P */
+            const numbers = [
                 team.played,
                 team.won,
                 team.drawn,
@@ -5902,14 +6462,14 @@ function renderMatchStandings() {
                 team.points
             ];
 
-            values.forEach((value, valueIndex) => {
+            numbers.forEach((value, i) => {
 
                 const td = document.createElement("td");
 
                 td.textContent = value;
 
-                if (valueIndex === 0) {
-                    td.style.fontWeight = "800";
+                if (i === numbers.length - 1) {
+                    td.className = "pts";
                 }
 
                 tr.appendChild(td);
@@ -5941,6 +6501,91 @@ function showRulesTab(name) {
 }
 
 /* =========================================================
+   ANIMASI MUNCUL SAAT SCROLL
+========================================================= */
+
+function initRevealOnScroll() {
+
+    if (
+        !("IntersectionObserver" in window) ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+        return;
+    }
+
+    const selector =
+        ".match, .club-card, .scorer, .knockout-match, " +
+        ".rule-article, .format-tile, .stat, .champion-card";
+
+    const observer = new IntersectionObserver(entries => {
+
+        let order = 0;
+
+        entries.forEach(entry => {
+
+            if (!entry.isIntersecting) return;
+
+            const el = entry.target;
+
+            observer.unobserve(el);
+
+            el.style.animationDelay = `${Math.min(order, 8) * 60}ms`;
+            order++;
+
+            el.classList.add("in-view");
+
+            /* Setelah animasi selesai, lepaskan kelasnya agar efek hover normal */
+            const done = event => {
+
+                if (event.target !== el) return;
+
+                el.removeEventListener("animationend", done);
+                el.classList.remove("reveal", "in-view");
+                el.style.animationDelay = "";
+            };
+
+            el.addEventListener("animationend", done);
+        });
+
+    }, { threshold: 0.08 });
+
+    function watch(root) {
+
+        const found = [];
+
+        if (root.matches && root.matches(selector)) found.push(root);
+
+        if (root.querySelectorAll) {
+            found.push(...root.querySelectorAll(selector));
+        }
+
+        found.forEach(el => {
+
+            if (el.dataset.reveal) return;
+
+            el.dataset.reveal = "1";
+            el.classList.add("reveal");
+            observer.observe(el);
+        });
+    }
+
+    watch(document.body);
+
+    /* Kartu yang dibuat belakangan (hasil data Appwrite) ikut dianimasikan */
+    new MutationObserver(mutations => {
+
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === 1) watch(node);
+            });
+        });
+
+    }).observe(document.querySelector("main"), {
+        childList: true,
+        subtree: true
+    });
+}
+/* =========================================================
    INITIALIZE
 ========================================================= */
 
@@ -5961,6 +6606,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     initializeAppwrite();
     setTournamentLogo();
+    initRevealOnScroll();
     await checkAdminSession();
 
     await loadClubs();
