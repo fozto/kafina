@@ -1415,6 +1415,43 @@ h3,
     object-fit: contain;
     border-radius: 50%;
 }
+.match-timeline {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    display: grid;
+    gap: 6px;
+}
+.event-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-2);
+}
+.event-row.away {
+    flex-direction: row-reverse;
+    text-align: right;
+}
+.event-minute {
+    color: var(--green-soft);
+    font-weight: 800;
+    min-width: 30px;
+}
+.event-text small { color: var(--muted); }
+
+.event-admin-list { margin-bottom: 18px; display: grid; gap: 8px; }
+.event-admin-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: #020806;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 12px;
+}
 
 </style>
 </head>
@@ -2672,6 +2709,54 @@ SIMPAN KLUB
 <!-- =========================================================
      TOAST
 ========================================================= -->
+<div id="event-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Kejadian Pertandingan</h2>
+      <button type="button" class="close" onclick="closeEventModal()">×</button>
+    </div>
+
+    <div id="event-list" class="event-admin-list"></div>
+
+    <form id="event-form" onsubmit="saveEvent(event)">
+      <div class="form-group">
+        <label>Klub</label>
+        <select id="event-club" required></select>
+      </div>
+
+      <div class="form-group">
+        <label>Jenis</label>
+        <select id="event-type" required>
+          <option value="goal">Gol</option>
+          <option value="penalty">Gol Penalti</option>
+          <option value="own_goal">Gol Bunuh Diri</option>
+          <option value="yellow">Kartu Kuning</option>
+          <option value="red">Kartu Merah</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Nama Pemain</label>
+        <input type="text" id="event-player" placeholder="Nama pemain" required>
+      </div>
+
+      <div style="display:flex;gap:12px">
+        <div class="form-group" style="flex:1">
+          <label>Menit</label>
+          <input type="number" id="event-minute" min="0" max="150" required>
+        </div>
+        <div class="form-group" style="flex:2">
+          <label>Keterangan (opsional)</label>
+          <input type="text" id="event-note" placeholder="mis. assist: Budi">
+        </div>
+      </div>
+
+      <button type="submit" class="button button-primary" style="width:100%">
+        TAMBAH KEJADIAN
+      </button>
+    </form>
+  </div>
+</div>
 
 <div
     id="toast"
@@ -2990,7 +3075,25 @@ function updateAdminUI() {
     const display = currentUser ? "inline-flex" : "none";
 
     if (addClubButton) addClubButton.style.display = display;
+    <button type="button"
+    class="btn-edit"
+    onclick="editMatch('${id}')">
+    Edit
+</button>
+
+<button type="button"
+    class="btn-edit"
+    onclick="openEventModal('${id}')">
+    Kejadian
+</button>
+
+<button type="button"
+    class="btn-delete"
+    onclick="deleteMatch('${id}')">
+    Hapus
+</button>
     if (addMatchButton) addMatchButton.style.display = display;
+
 
     if (adminButton) {
         if (currentUser) {
@@ -3867,7 +3970,6 @@ function renderMatches() {
         });
     });
 }
-
 function createMatchElement(match) {
 
     const homeClub = getClubById(match.home_club_id);
@@ -3945,6 +4047,12 @@ function createMatchElement(match) {
                             </button>
 
                             <button type="button"
+                                class="btn-edit"
+                                onclick="openEventModal('${id}')">
+                                Kejadian
+                            </button>
+
+                            <button type="button"
                                 class="btn-delete"
                                 onclick="deleteMatch('${id}')">
                                 Hapus
@@ -3956,11 +4064,12 @@ function createMatchElement(match) {
             }
 
         </div>
+
+        ${buildTimelineHtml(match)}
     `;
 
     return element;
 }
-
 
 /* =========================================================
    EDIT MATCH
@@ -4037,6 +4146,7 @@ function editMatch(matchId) {
    DELETE MATCH
 ========================================================= */
 
+
 async function deleteMatch(matchId) {
 
     if (!currentUser || !databases) {
@@ -4062,6 +4172,17 @@ async function deleteMatch(matchId) {
 
     try {
 
+        /* Hapus semua kejadian milik pertandingan ini lebih dulu */
+        const related = matchEvents.filter(ev => ev.match_id === matchId);
+
+        for (const ev of related) {
+            await databases.deleteRow({
+                databaseId: APPWRITE_CONFIG.databaseId,
+                tableId: APPWRITE_CONFIG.eventsTableId,
+                rowId: ev.$id
+            });
+        }
+
         await databases.deleteRow({
             databaseId: APPWRITE_CONFIG.databaseId,
             tableId: APPWRITE_CONFIG.matchesTableId,
@@ -4071,6 +4192,8 @@ async function deleteMatch(matchId) {
         showToast("Pertandingan berhasil dihapus.");
 
         await loadMatches();
+
+        await loadEvents();
 
     } catch (error) {
 
@@ -4082,7 +4205,254 @@ async function deleteMatch(matchId) {
         );
     }
 }
+/* =========================================================
+   MATCH EVENTS (gol & kartu)
+========================================================= */
 
+let matchEvents = [];
+let eventMatchId = null;
+let savingEvent = false;
+
+const EVENT_TYPES = {
+    goal:     { icon: "⚽", label: "Gol" },
+    penalty:  { icon: "⚽", label: "Gol Penalti" },
+    own_goal: { icon: "⚽", label: "Gol Bunuh Diri" },
+    yellow:   { icon: "🟨", label: "Kartu Kuning" },
+    red:      { icon: "🟥", label: "Kartu Merah" }
+};
+
+async function loadEvents() {
+    if (!databases) return;
+
+    try {
+        matchEvents = await listAllRows(APPWRITE_CONFIG.eventsTableId);
+        renderMatches();
+    } catch (error) {
+        console.error("Gagal mengambil kejadian:", error);
+        showToast("Gagal memuat kejadian pertandingan.");
+    }
+}
+
+function getEventsForMatch(matchId) {
+    return matchEvents
+        .filter(ev => ev.match_id === matchId)
+        .sort((a, b) => Number(a.minute) - Number(b.minute));
+}
+
+function buildTimelineHtml(match) {
+
+    const list = getEventsForMatch(match.$id);
+
+    if (!list.length) return "";
+
+    const rows = list.map(ev => {
+
+        const info = EVENT_TYPES[ev.event_type] ||
+            { icon: "•", label: ev.event_type };
+
+        const side = ev.club_id === match.home_club_id ? "home" : "away";
+
+        const note = ev.note
+            ? ` <small>(${escapeHtml(ev.note)})</small>`
+            : "";
+
+        return `
+            <div class="event-row ${side}">
+                <span class="event-minute">${escapeHtml(ev.minute)}'</span>
+                <span class="event-icon" title="${escapeHtml(info.label)}">${info.icon}</span>
+                <span class="event-text">${escapeHtml(ev.player_name)}${note}</span>
+            </div>
+        `;
+    }).join("");
+
+    return `<div class="match-timeline">${rows}</div>`;
+}
+
+function openEventModal(matchId) {
+
+    if (!currentUser || !databases) {
+        showToast("Silakan login sebagai admin.");
+        return;
+    }
+
+    const match = matches.find(item => item.$id === matchId);
+
+    if (!match) {
+        showToast("Pertandingan tidak ditemukan.");
+        return;
+    }
+
+    eventMatchId = matchId;
+
+    const select = document.getElementById("event-club");
+    select.replaceChildren();
+
+    [match.home_club_id, match.away_club_id].forEach(clubId => {
+        const option = document.createElement("option");
+        option.value = clubId;
+        option.textContent = getClubById(clubId)?.name || "Klub";
+        select.appendChild(option);
+    });
+
+    document.getElementById("event-form").reset();
+
+    renderEventAdminList();
+
+    document.getElementById("event-modal").classList.add("show");
+}
+
+function closeEventModal() {
+    document.getElementById("event-modal").classList.remove("show");
+    eventMatchId = null;
+}
+
+function renderEventAdminList() {
+
+    const container = document.getElementById("event-list");
+
+    if (!container) return;
+
+    container.replaceChildren();
+
+    const list = getEventsForMatch(eventMatchId);
+
+    if (!list.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.style.padding = "12px";
+        empty.textContent = "Belum ada kejadian.";
+        container.appendChild(empty);
+        return;
+    }
+
+    list.forEach(ev => {
+
+        const info = EVENT_TYPES[ev.event_type] ||
+            { icon: "•", label: ev.event_type };
+
+        const clubName = getClubById(ev.club_id)?.name || "Klub";
+
+        const item = document.createElement("div");
+        item.className = "event-admin-item";
+
+        item.innerHTML = `
+            <span>
+                ${escapeHtml(ev.minute)}' ${info.icon}
+                <strong>${escapeHtml(ev.player_name)}</strong>
+                (${escapeHtml(clubName)})
+            </span>
+            <button type="button" class="btn-delete"
+                onclick="deleteEvent('${escapeHtml(ev.$id)}')">
+                Hapus
+            </button>
+        `;
+
+        container.appendChild(item);
+    });
+}
+
+async function saveEvent(event) {
+
+    event.preventDefault();
+
+    if (savingEvent) return;
+
+    if (!currentUser || !databases || !eventMatchId) {
+        showToast("Silakan login sebagai admin.");
+        return;
+    }
+
+    const clubId = document.getElementById("event-club").value;
+    const type = document.getElementById("event-type").value;
+    const player = document.getElementById("event-player").value.trim();
+    const minute = Number(document.getElementById("event-minute").value);
+    const note = document.getElementById("event-note").value.trim();
+
+    if (!clubId || !player) {
+        showToast("Klub dan nama pemain wajib diisi.");
+        return;
+    }
+
+    if (!Number.isInteger(minute) || minute < 0 || minute > 150) {
+        showToast("Menit harus berupa bilangan bulat 0–150.");
+        return;
+    }
+
+    savingEvent = true;
+
+    try {
+
+        const data = {
+            match_id: eventMatchId,
+            club_id: clubId,
+            event_type: type,
+            player_name: player,
+            minute: minute
+        };
+
+        /* note opsional: hanya dikirim kalau diisi */
+        if (note) data.note = note;
+
+        await databases.createRow({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId: APPWRITE_CONFIG.eventsTableId,
+            rowId: Appwrite.ID.unique(),
+            data: data
+        });
+
+        showToast("Kejadian ditambahkan.");
+
+        await loadEvents();
+
+        renderEventAdminList();
+
+        document.getElementById("event-player").value = "";
+        document.getElementById("event-minute").value = "";
+        document.getElementById("event-note").value = "";
+
+    } catch (error) {
+
+        console.error("Gagal menyimpan kejadian:", error);
+
+        showToast(
+            "Gagal menyimpan kejadian: " +
+            (error.message || "Periksa izin Appwrite.")
+        );
+
+    } finally {
+
+        savingEvent = false;
+    }
+}
+
+async function deleteEvent(eventId) {
+
+    if (!currentUser || !databases) return;
+
+    if (!confirm("Hapus kejadian ini?")) return;
+
+    try {
+
+        await databases.deleteRow({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId: APPWRITE_CONFIG.eventsTableId,
+            rowId: eventId
+        });
+
+        await loadEvents();
+
+        renderEventAdminList();
+
+    } catch (error) {
+
+        console.error("Gagal menghapus kejadian:", error);
+
+        showToast(
+            "Gagal menghapus kejadian: " +
+            (error.message || "Periksa izin Appwrite.")
+        );
+    }
+}
 
 /* =========================================================
    MATCH STATS
@@ -4278,6 +4648,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadClubs();
 
     await loadMatches();
+
+    await loadEvents();
 });
 </script>
 
