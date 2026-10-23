@@ -2779,6 +2779,20 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
         display: none;
     }
 }
+/* ===== SKOR OTOMATIS ===== */
+
+.score-hint {
+    margin: -6px 0 14px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.form-group input[readonly] {
+    opacity: .65;
+    cursor: not-allowed;
+    border-style: dashed;
+}
 </style>
 </head>
 
@@ -4154,6 +4168,7 @@ SIMPAN KLUB
                     >
                 </div>
             </div>
+            <div id="score-hint" class="score-hint"></div>
 
             <div id="pen-row" style="display:none;gap:12px">
                 <div class="form-group" style="flex:1">
@@ -5074,6 +5089,10 @@ function openMatchModal() {
 
     updateMatchFormStage();
 
+    updateScoreMode(null);
+
+    updateScoreMode(match);
+
     document.getElementById("match-modal").classList.add("show");
 }
 
@@ -5235,42 +5254,63 @@ async function saveMatch(event) {
 
     /* ---------- SKOR ---------- */
 
-    const hasHomeValue = homeValue !== "";
-    const hasAwayValue = awayValue !== "";
+    /* Kalau gol sudah dicatat lewat tombol Kejadian, skor mengikuti gol */
+    const eventScore = editingMatchId
+        ? getEventScore({
+            $id: editingMatchId,
+            home_club_id: homeClubId,
+            away_club_id: awayClubId
+        })
+        : null;
 
-    if (hasHomeValue !== hasAwayValue) {
-        showToast("Isi skor kedua klub, atau kosongkan keduanya.");
-        return;
-    }
-
-    /* Kalau skor diisi, pertandingan otomatis dianggap selesai */
-    if (hasHomeValue && hasAwayValue) {
-        status = "finished";
-    }
+    const autoScore = !!eventScore && eventScore.count > 0;
 
     let homeScore = null;
     let awayScore = null;
 
-    if (status === "finished") {
+    if (autoScore) {
 
-        if (!hasHomeValue || !hasAwayValue) {
-            showToast(
-                "Masukkan skor kedua klub jika pertandingan selesai."
-            );
+        if (status === "finished") {
+            homeScore = eventScore.home;
+            awayScore = eventScore.away;
+        }
+
+    } else {
+
+        const hasHomeValue = homeValue !== "";
+        const hasAwayValue = awayValue !== "";
+
+        if (hasHomeValue !== hasAwayValue) {
+            showToast("Isi skor kedua klub, atau kosongkan keduanya.");
             return;
         }
 
-        homeScore = Number(homeValue);
-        awayScore = Number(awayValue);
+        /* Skor manual diisi: pertandingan otomatis dianggap selesai */
+        if (hasHomeValue && hasAwayValue) {
+            status = "finished";
+        }
 
-        if (
-            !Number.isInteger(homeScore) ||
-            !Number.isInteger(awayScore) ||
-            homeScore < 0 ||
-            awayScore < 0
-        ) {
-            showToast("Skor harus berupa bilangan bulat minimal 0.");
-            return;
+        if (status === "finished") {
+
+            if (!hasHomeValue || !hasAwayValue) {
+                showToast(
+                    "Masukkan skor kedua klub jika pertandingan selesai."
+                );
+                return;
+            }
+
+            homeScore = Number(homeValue);
+            awayScore = Number(awayValue);
+
+            if (
+                !Number.isInteger(homeScore) ||
+                !Number.isInteger(awayScore) ||
+                homeScore < 0 ||
+                awayScore < 0
+            ) {
+                showToast("Skor harus berupa bilangan bulat minimal 0.");
+                return;
+            }
         }
     }
 
@@ -5327,7 +5367,7 @@ async function saveMatch(event) {
         home_score: homeScore,
         away_score: awayScore,
         home_penalty_score: homePen,
-        away_penalty_score
+        away_penalty_score: awayPen
     };
 
     /* ---------- SIMPAN ---------- */
@@ -6019,6 +6059,120 @@ async function loadEvents() {
     }
 }
 
+
+/* =========================================================
+   SKOR OTOMATIS DARI KEJADIAN
+========================================================= */
+
+const GOAL_TYPES = ["goal", "penalty", "own_goal"];
+
+/* Hitung skor dari gol yang tercatat. Gol bunuh diri untuk lawan. */
+function getEventScore(match) {
+
+    let home = 0;
+    let away = 0;
+    let count = 0;
+
+    matchEvents.forEach(ev => {
+
+        if (ev.match_id !== match.$id) return;
+        if (!GOAL_TYPES.includes(ev.event_type)) return;
+
+        const ownGoal = ev.event_type === "own_goal";
+
+        const forHome = ownGoal
+            ? ev.club_id === match.away_club_id
+            : ev.club_id === match.home_club_id;
+
+        const forAway = ownGoal
+            ? ev.club_id === match.home_club_id
+            : ev.club_id === match.away_club_id;
+
+        if (forHome) {
+            home++;
+            count++;
+        } else if (forAway) {
+            away++;
+            count++;
+        }
+    });
+
+    return { home, away, count };
+}
+
+/* Simpan skor hasil hitungan ke pertandingan yang sudah selesai */
+async function syncMatchScore(matchId) {
+
+    if (!databases) return;
+
+    const match = matches.find(item => item.$id === matchId);
+
+    if (!match || match.status !== "finished") return;
+
+    const result = getEventScore(match);
+
+    if (
+        match.home_score === result.home &&
+        match.away_score === result.away
+    ) {
+        return;
+    }
+
+    try {
+
+        await databases.updateRow({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId: APPWRITE_CONFIG.matchesTableId,
+            rowId: matchId,
+            data: {
+                home_score: result.home,
+                away_score: result.away
+            }
+        });
+
+        await loadMatches();
+
+    } catch (error) {
+
+        console.error("Gagal menyinkronkan skor:", error);
+
+        showToast("Skor belum tersinkron: " + (error.message || "periksa izin Appwrite."));
+    }
+}
+
+/* Kunci kolom skor kalau gol sudah tercatat */
+function updateScoreMode(match) {
+
+    const homeInput = document.getElementById("home-score");
+    const awayInput = document.getElementById("away-score");
+    const hint = document.getElementById("score-hint");
+
+    if (!homeInput || !awayInput) return;
+
+    const result = match ? getEventScore(match) : null;
+    const auto = !!result && result.count > 0;
+
+    homeInput.readOnly = auto;
+    awayInput.readOnly = auto;
+
+    if (auto) {
+
+        homeInput.value = result.home;
+        awayInput.value = result.away;
+
+        if (hint) {
+            hint.textContent =
+                "Skor dihitung otomatis dari gol yang dicatat lewat tombol Kejadian.";
+        }
+
+    } else if (hint) {
+
+        hint.textContent = match
+            ? "Belum ada gol tercatat. Catat gol lewat tombol Kejadian agar skor otomatis, atau isi skor manual di sini."
+            : "Setelah pertandingan dibuat, catat gol lewat tombol Kejadian agar skor terhitung otomatis.";
+    }
+}
+
 function getEventsForMatch(matchId) {
     return matchEvents
         .filter(ev => ev.match_id === matchId)
@@ -6190,6 +6344,11 @@ async function saveEvent(event) {
 
         await loadEvents();
 
+        /* Gol mengubah skor: sinkronkan ke pertandingan */
+        if (GOAL_TYPES.includes(type)) {
+            await syncMatchScore(eventMatchId);
+        }
+
         renderEventAdminList();
 
         document.getElementById("event-player").value = "";
@@ -6211,11 +6370,16 @@ async function saveEvent(event) {
     }
 }
 
+
 async function deleteEvent(eventId) {
 
     if (!currentUser || !databases) return;
 
     if (!confirm("Hapus kejadian ini?")) return;
+
+    const target = matchEvents.find(ev => ev.$id === eventId);
+    const matchId = target ? target.match_id : null;
+    const wasGoal = !!target && GOAL_TYPES.includes(target.event_type);
 
     try {
 
@@ -6226,6 +6390,10 @@ async function deleteEvent(eventId) {
         });
 
         await loadEvents();
+
+        if (wasGoal && matchId) {
+            await syncMatchScore(matchId);
+        }
 
         renderEventAdminList();
 
