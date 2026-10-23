@@ -3066,6 +3066,7 @@ async function logoutAdmin() {
     }
 }
 
+
 function updateAdminUI() {
 
     const addClubButton = document.getElementById("add-club-button");
@@ -3075,25 +3076,7 @@ function updateAdminUI() {
     const display = currentUser ? "inline-flex" : "none";
 
     if (addClubButton) addClubButton.style.display = display;
-    <button type="button"
-    class="btn-edit"
-    onclick="editMatch('${id}')">
-    Edit
-</button>
-
-<button type="button"
-    class="btn-edit"
-    onclick="openEventModal('${id}')">
-    Kejadian
-</button>
-
-<button type="button"
-    class="btn-delete"
-    onclick="deleteMatch('${id}')">
-    Hapus
-</button>
     if (addMatchButton) addMatchButton.style.display = display;
-
 
     if (adminButton) {
         if (currentUser) {
@@ -3109,7 +3092,6 @@ function updateAdminUI() {
     renderClubs();
     renderMatches();
 }
-
 
 /* =========================================================
    CLUB MODAL
