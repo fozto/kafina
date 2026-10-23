@@ -3124,20 +3124,10 @@ const APPWRITE_CONFIG = {
     storageBucketId: "club-logos"
 };
 
-/*
-    Nama kolom "Stage" di tabel matches.
-    Kalau di Appwrite namanya "stage" (huruf kecil),
-    ubah nilai ini menjadi "stage".
-*/
 const MATCH_STAGE_FIELD = "Stage";
-
-/* Logo turnamen (Cloudinary). Ganti dengan link logo kamu. */
 const TOURNAMENT_LOGO_URL =
-    "https://res.cloudinary.com/demo/image/upload/sample.jpg";
-
-/* Jumlah hari ke depan yang tampil di Beranda */
+    "https://res.cloudinary.com/dmecuyazc/image/upload/v1792785206/kafina_cup_altodz.png;
 const HOME_DAYS_AHEAD = 14;
-/* Babak knockout (nilai kolom Stage) */
 const KNOCKOUT_STAGES = ["Semifinal 1", "Semifinal 2", "Final"];
 
 function isKnockoutStage(stage) {
@@ -3147,35 +3137,21 @@ function isKnockoutStage(stage) {
 function getMatchStage(match) {
     return match[MATCH_STAGE_FIELD] || "Group Stage";
 }
-/* =========================================================
-   STATE
-========================================================= */
 
 let client = null;
 let account = null;
 let databases = null;
 let storage = null;
-
 let currentUser = null;
-
 let clubs = [];
 let matches = [];
-
 let editingClubId = null;
 let editingOldLogoUrl = "";
-
 let editingMatchId = null;
-
 let loginInProgress = false;
 let savingClub = false;
 let savingMatch = false;
-
 let toastTimer = null;
-
-
-/* =========================================================
-   UTILITIES
-========================================================= */
 
 function escapeHtml(value) {
     return String(value ?? "")
