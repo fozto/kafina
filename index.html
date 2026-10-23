@@ -1678,6 +1678,51 @@ h3,
 
     .next-match { text-align: center; }
 }
+/* ===== FILTER PERTANDINGAN ===== */
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin-bottom: 10px;
+}
+
+.filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip {
+    border: 1px solid var(--border-light);
+    background: rgba(22,101,52,.10);
+    color: var(--text-2);
+
+    padding: 8px 16px;
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    transition: .2s;
+}
+
+.chip:hover {
+    border-color: var(--green-light);
+    color: var(--green-soft);
+}
+
+.chip.active {
+    background: linear-gradient(135deg, #166534, #15803d);
+    border-color: var(--green-light);
+    color: white;
+}
+
+.filter-count {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 14px;
+}
 </style>
 </head>
 
@@ -1954,7 +1999,6 @@ Belum ada pertandingan.
     id="page-matches"
     class="page"
 >
-
 <div class="section-title">
 
 <div>
@@ -1969,29 +2013,41 @@ Jadwal dan hasil pertandingan
 
 </div>
 
-</div>
-
-
-<div
-    id="matches-container"
-    class="matches"
+<button
+    id="add-match-button-matches"
+    class="button button-primary"
+    onclick="openMatchModal()"
+    style="display:none"
 >
-
-<div class="empty">
-
-<div class="empty-icon">
-📅
-</div>
-
-Belum ada pertandingan.
+    + Input Pertandingan
+</button>
 
 </div>
 
+
+<div class="filters">
+
+    <div id="filter-status" class="filter-group">
+        <button type="button" class="chip active" data-value="all"
+            onclick="setMatchFilter('status', 'all')">Semua</button>
+        <button type="button" class="chip" data-value="scheduled"
+            onclick="setMatchFilter('status', 'scheduled')">Terjadwal</button>
+        <button type="button" class="chip" data-value="finished"
+            onclick="setMatchFilter('status', 'finished')">Selesai</button>
+    </div>
+
+    <div id="filter-group" class="filter-group">
+        <button type="button" class="chip active" data-value="all"
+            onclick="setMatchFilter('group', 'all')">Semua Grup</button>
+        <button type="button" class="chip" data-value="A"
+            onclick="setMatchFilter('group', 'A')">Grup A</button>
+        <button type="button" class="chip" data-value="B"
+            onclick="setMatchFilter('group', 'B')">Grup B</button>
+    </div>
+
 </div>
 
-</section>
-
-
+<div id="match-count" class="filter-count"></div>
 <!-- =========================================================
      STANDINGS
 ========================================================= -->
@@ -3363,6 +3419,9 @@ function updateAdminUI() {
 
     if (addClubButton) addClubButton.style.display = display;
     if (addMatchButton) addMatchButton.style.display = display;
+        const addMatchButton2 = document.getElementById("add-match-button-matches");
+
+    if (addMatchButton2) addMatchButton2.style.display = display;
 
     if (adminButton) {
         if (currentUser) {
@@ -4202,21 +4261,41 @@ function renderMatches() {
     const allContainer = document.getElementById("matches-container");
     const homeContainer = document.getElementById("latest-matches");
 
+    /* Halaman Pertandingan: dengan filter status dan grup */
     if (allContainer) {
 
         allContainer.replaceChildren();
 
         if (!matches.length) {
+
+            updateMatchCount(0);
+
             appendEmpty(allContainer, "📅", "Belum ada pertandingan.");
+
         } else {
-            [...matches]
-                .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff))
-                .forEach(match => {
+
+            const filtered = getFilteredMatches();
+
+            updateMatchCount(filtered.length);
+
+            if (!filtered.length) {
+
+                appendEmpty(
+                    allContainer,
+                    "🔍",
+                    "Tidak ada pertandingan yang cocok dengan filter."
+                );
+
+            } else {
+
+                filtered.forEach(match => {
                     allContainer.appendChild(createMatchElement(match));
                 });
+            }
         }
     }
 
+    /* Beranda: 14 hari ke depan, dikelompokkan per tanggal */
     if (homeContainer) {
 
         homeContainer.replaceChildren();
@@ -4231,7 +4310,6 @@ function renderMatches() {
     renderNextMatch();
 }
 
-/* Beranda: hari ini sampai HOME_DAYS_AHEAD hari ke depan, per tanggal */
 function renderHomeMatches(container) {
 
     const start = new Date();
@@ -5094,7 +5172,6 @@ function sortStandings(standings) {
 
 function renderMatchStandings() {
 
-      renderTopScorers();
     const rows = calculateStandings(clubs, matches);
 
     ["A", "B"].forEach(group => {
