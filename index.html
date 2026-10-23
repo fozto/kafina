@@ -5920,6 +5920,25 @@ function renderMatchStandings() {
     });
 }
 
+/* ---------- Regulasi: pindah tab ---------- */
+
+function showRulesTab(name) {
+
+    document
+        .querySelectorAll("#rules-tabs .chip")
+        .forEach(chip => {
+            chip.classList.toggle("active", chip.dataset.value === name);
+        });
+
+    document
+        .querySelectorAll(".rules-panel")
+        .forEach(panel => {
+            panel.classList.toggle(
+                "active",
+                panel.id === "rules-panel-" + name
+            );
+        });
+}
 
 /* =========================================================
    INITIALIZE
