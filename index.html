@@ -1833,6 +1833,129 @@ h3,
     font-weight: 800;
     letter-spacing: .5px;
 }
+/* ===== REGULASI TURNAMEN ===== */
+
+.rules-panel {
+    display: none;
+}
+
+.rules-panel.active {
+    display: block;
+    animation: rulesFade .35s ease;
+}
+
+@keyframes rulesFade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.rules p {
+    margin-bottom: 10px;
+}
+
+.rule-list {
+    padding-left: 20px;
+    margin-top: 6px;
+}
+
+.rule-list li {
+    margin-bottom: 6px;
+}
+
+.rule-article {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 16px;
+
+    padding: 18px;
+    margin-bottom: 12px;
+
+    background: linear-gradient(145deg, #081910, #041009);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+
+    transition: .2s;
+}
+
+.rule-article:hover {
+    border-color: rgba(34,197,94,.35);
+    transform: translateY(-1px);
+}
+
+.rule-number {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+    padding-top: 2px;
+    color: var(--green-light);
+    opacity: .85;
+}
+
+.rule-body h3 {
+    font-size: 15px;
+    margin-bottom: 6px;
+}
+
+.rule-body p,
+.rule-body li {
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+.rule-body ol {
+    margin-top: 6px;
+    padding-left: 20px;
+}
+
+.format-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.format-tile {
+    text-align: center;
+    padding: 22px 10px;
+
+    background: linear-gradient(145deg, #091b11, #041009);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.format-tile strong {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--green-soft);
+    line-height: 1;
+}
+
+.format-tile span {
+    display: block;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 900px) {
+    .format-tiles {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 650px) {
+    .rule-article {
+        grid-template-columns: 38px 1fr;
+        gap: 10px;
+        padding: 14px;
+    }
+}
 </style>
 </head>
 
@@ -1933,7 +2056,7 @@ h3,
         class="nav-button"
         onclick="showPage('rules', this)"
     >
-        Peraturan
+        Regulasi
     </button>
 
 </div>
@@ -2625,77 +2748,271 @@ Grup B
 <div>
 
 <h2>
-Peraturan
+Regulasi Turnamen
 </h2>
 
 <p>
-Peraturan kompetisi
+Latar belakang, peraturan, dan regulasi KAFINA CUP
 </p>
 
 </div>
 
 </div>
 
+
+<div class="filters">
+
+    <div id="rules-tabs" class="filter-group">
+        <button type="button" class="chip active" data-value="background"
+            onclick="showRulesTab('background')">Latar Belakang</button>
+        <button type="button" class="chip" data-value="rules"
+            onclick="showRulesTab('rules')">Peraturan</button>
+        <button type="button" class="chip" data-value="regulation"
+            onclick="showRulesTab('regulation')">Regulasi</button>
+    </div>
+
+</div>
+
+
+<!-- ===================== LATAR BELAKANG ===================== -->
+
+<div id="rules-panel-background" class="rules-panel active">
 
 <div class="card rules">
 
-<h3>
-Format Kompetisi
-</h3>
+<h3>Tentang KAFINA CUP</h3>
 
 <p>
-KAFINA CUP diikuti oleh 8 klub
-yang dibagi menjadi 2 grup.
-Masing-masing grup terdiri dari
-4 klub.
+KAFINA CUP adalah turnamen sepak bola yang mempertemukan delapan klub
+dalam satu kompetisi yang tertata, mulai dari babak grup, semifinal,
+hingga final. Turnamen ini dirancang sebagai ajang bermain dan
+berkompetisi secara sehat sekaligus menjaga semangat kebersamaan
+antarklub peserta.
 </p>
-
-
-<h3>
-Babak Grup
-</h3>
 
 <p>
-Setiap klub bertemu satu kali
-dengan seluruh klub lain di grupnya.
+Seluruh jadwal, hasil pertandingan, klasemen, dan statistik pemain
+dipublikasikan secara terbuka melalui situs ini, sehingga peserta dan
+pendukung dapat mengikuti perjalanan turnamen dari awal hingga laga
+puncak.
 </p>
 
+<h3>Tujuan Turnamen</h3>
 
-<h3>
-Kualifikasi
-</h3>
+<ul class="rule-list">
+    <li>Menyelenggarakan kompetisi sepak bola yang adil, tertib, dan sportif.</li>
+    <li>Mempererat hubungan antarklub dan antarpendukung.</li>
+    <li>Memberi ruang bagi para pemain untuk menunjukkan kemampuan terbaiknya.</li>
+    <li>Menyajikan informasi turnamen yang transparan dan mudah diakses.</li>
+</ul>
 
-<p>
-Dua klub teratas dari setiap grup
-berhak melaju ke semifinal.
-</p>
+</div>
+
+<div class="format-tiles">
+
+    <div class="format-tile">
+        <strong>8</strong>
+        <span>KLUB PESERTA</span>
+    </div>
+
+    <div class="format-tile">
+        <strong>2</strong>
+        <span>GRUP</span>
+    </div>
+
+    <div class="format-tile">
+        <strong>12</strong>
+        <span>LAGA BABAK GRUP</span>
+    </div>
+
+    <div class="format-tile">
+        <strong>3</strong>
+        <span>LAGA KNOCKOUT</span>
+    </div>
+
+</div>
+
+</div>
 
 
-<h3>
-Semifinal
-</h3>
+<!-- ======================== PERATURAN ======================== -->
 
-<p>
-Juara Grup A menghadapi
-runner-up Grup B.
-Juara Grup B menghadapi
-runner-up Grup A.
-</p>
+<div id="rules-panel-rules" class="rules-panel">
+
+<article class="rule-article">
+    <div class="rule-number">01</div>
+    <div class="rule-body">
+        <h3>Format Kompetisi</h3>
+        <p>
+            KAFINA CUP diikuti oleh 8 klub yang dibagi menjadi 2 grup,
+            yaitu Grup A dan Grup B. Masing-masing grup terdiri dari
+            4 klub.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">02</div>
+    <div class="rule-body">
+        <h3>Babak Grup</h3>
+        <p>
+            Setiap klub bertemu satu kali dengan seluruh klub lain di
+            grupnya, sehingga setiap grup memainkan 6 pertandingan.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">03</div>
+    <div class="rule-body">
+        <h3>Sistem Poin dan Peringkat</h3>
+        <p>
+            Kemenangan bernilai 3 poin, hasil seri 1 poin, dan kekalahan
+            0 poin. Peringkat klub dalam grup ditentukan berdasarkan
+            urutan berikut:
+        </p>
+        <ol>
+            <li>Jumlah poin terbanyak.</li>
+            <li>Selisih gol terbesar.</li>
+            <li>Jumlah gol memasukkan terbanyak.</li>
+            <li>Jika masih sama, ditentukan oleh panitia, misalnya melalui undian.</li>
+        </ol>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">04</div>
+    <div class="rule-body">
+        <h3>Kualifikasi ke Semifinal</h3>
+        <p>
+            Dua klub teratas dari setiap grup berhak melaju ke semifinal.
+            Juara Grup A menghadapi runner-up Grup B pada Semifinal 1,
+            dan Juara Grup B menghadapi runner-up Grup A pada Semifinal 2.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">05</div>
+    <div class="rule-body">
+        <h3>Final</h3>
+        <p>
+            Pemenang Semifinal 1 bertemu pemenang Semifinal 2 pada laga
+            final untuk menentukan juara KAFINA CUP.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">06</div>
+    <div class="rule-body">
+        <h3>Adu Penalti</h3>
+        <p>
+            Pertandingan semifinal dan final tidak boleh berakhir seri.
+            Jika skor seri di akhir pertandingan, pemenang ditentukan
+            melalui adu penalti. Skor adu penalti dicatat terpisah dan
+            tidak dihitung sebagai gol pertandingan maupun gol Top Skor.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">07</div>
+    <div class="rule-body">
+        <h3>Ketentuan Pertandingan</h3>
+        <p>
+            Durasi pertandingan, jumlah pemain, dan jumlah pergantian
+            pemain ditetapkan oleh panitia dan diumumkan sebelum
+            turnamen dimulai.
+        </p>
+    </div>
+</article>
+
+</div>
 
 
-<h3>
-Final
-</h3>
+<!-- ======================== REGULASI ======================== -->
 
-<p>
-Pemenang kedua semifinal
-bertemu di final.
-</p>
+<div id="rules-panel-regulation" class="rules-panel">
+
+<article class="rule-article">
+    <div class="rule-number">01</div>
+    <div class="rule-body">
+        <h3>Kartu dan Sanksi</h3>
+        <p>
+            Kartu kuning merupakan peringatan kepada pemain. Kartu
+            merah mengeluarkan pemain dari lapangan dan dikenai sanksi
+            tidak boleh bermain pada pertandingan berikutnya. Sanksi
+            lanjutan untuk pelanggaran berat ditetapkan oleh panitia.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">02</div>
+    <div class="rule-body">
+        <h3>Sportivitas dan Fair Play</h3>
+        <p>
+            Seluruh pemain, ofisial, dan pendukung wajib menjunjung
+            tinggi sportivitas. Tindakan kasar, ucapan yang tidak pantas,
+            dan perilaku yang merugikan pihak lain dapat dikenai sanksi.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">03</div>
+    <div class="rule-body">
+        <h3>Pencatatan Hasil</h3>
+        <p>
+            Hasil pertandingan, pencetak gol, kartu, dan menit kejadian
+            dicatat oleh panitia dan dipublikasikan melalui situs ini.
+            Data yang dipublikasikan panitia merupakan data resmi
+            turnamen.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">04</div>
+    <div class="rule-body">
+        <h3>Ketentuan Top Skor</h3>
+        <p>
+            Peringkat Top Skor dihitung dari jumlah gol pemain dalam
+            pertandingan, termasuk gol dari titik penalti dalam
+            permainan. Gol bunuh diri dan gol pada adu penalti tidak
+            dihitung. Jika jumlah gol sama, pemain dengan gol penalti
+            lebih sedikit berada di peringkat lebih tinggi.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">05</div>
+    <div class="rule-body">
+        <h3>Protes dan Keputusan Panitia</h3>
+        <p>
+            Protes disampaikan secara resmi kepada panitia. Keputusan
+            panitia bersifat final dan mengikat bagi seluruh peserta.
+        </p>
+    </div>
+</article>
+
+<article class="rule-article">
+    <div class="rule-number">06</div>
+    <div class="rule-body">
+        <h3>Perubahan Jadwal</h3>
+        <p>
+            Jadwal pertandingan dapat berubah karena cuaca, kondisi
+            lapangan, atau keadaan lain. Setiap perubahan diumumkan
+            melalui situs ini.
+        </p>
+    </div>
+</article>
 
 </div>
 
 </section>
-
 
 </main>
 
