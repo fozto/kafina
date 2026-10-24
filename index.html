@@ -2793,6 +2793,246 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
     cursor: not-allowed;
     border-style: dashed;
 }
+/* =========================================================
+   KLUB: TAMPILAN BARU
+========================================================= */
+
+#clubs-container { display: block; }
+
+.club-group { margin-bottom: 40px; }
+
+.club-group-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.club-group-letter {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 900;
+    color: #0a1440;
+    background: linear-gradient(135deg, #ffd45e, #f2b01e 55%, #d98f0b);
+    box-shadow: 0 8px 24px rgba(242,176,30,.30);
+}
+
+.club-group-head h3 {
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.club-group-head small {
+    display: block;
+    margin-top: 2px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+
+.club-group-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(242,176,30,.5), rgba(36,87,197,.3), transparent);
+}
+
+.club-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+/* ----- Kartu ----- */
+
+.club-grid .club-card {
+    --mx: 50%;
+    --my: 0%;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    padding: 34px 16px 18px;
+    border-radius: 22px;
+    border: 1px solid transparent;
+    background:
+        linear-gradient(145deg, #0c1c4a, #060f2e) padding-box,
+        linear-gradient(145deg,
+            rgba(255,212,94,.60),
+            rgba(36,87,197,.38) 45%,
+            rgba(31,157,75,.45)) border-box;
+    transition: transform .4s var(--ease), box-shadow .4s var(--ease);
+}
+
+/* Sorot cahaya mengikuti kursor */
+.club-grid .club-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(260px circle at var(--mx) var(--my),
+        rgba(242,176,30,.24), transparent 65%);
+    opacity: .45;
+    transition: opacity .3s;
+}
+
+/* Huruf grup sebagai watermark */
+.club-grid .club-card::after {
+    content: attr(data-group);
+    position: absolute;
+    right: -4px;
+    top: -22px;
+    z-index: -1;
+    font-family: var(--font-heading);
+    font-size: 130px;
+    font-weight: 900;
+    line-height: 1;
+    color: rgba(255,255,255,.04);
+    pointer-events: none;
+}
+
+.club-grid .club-card:hover {
+    transform: translateY(-8px);
+    border-color: transparent;
+    box-shadow: 0 22px 55px rgba(0,0,0,.5), 0 0 40px rgba(242,176,30,.14);
+}
+
+.club-grid .club-card:hover::before { opacity: 1; }
+
+/* ----- Logo besar + glow + cincin ----- */
+
+.club-grid .club-card .club-logo {
+    position: relative;
+    width: 124px;
+    height: 124px;
+    margin: 0 auto 20px;
+    font-size: 52px;
+}
+
+.club-grid .club-card .club-logo::before {
+    content: "";
+    position: absolute;
+    inset: 6%;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(242,176,30,.38), rgba(36,87,197,.18) 60%, transparent 74%);
+    filter: blur(14px);
+    transition: transform .4s var(--ease);
+}
+
+.club-grid .club-card .club-logo::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 1px dashed rgba(242,176,30,.30);
+    animation: clubRing 22s linear infinite;
+}
+
+@keyframes clubRing { to { transform: rotate(360deg); } }
+
+.club-grid .club-card .club-logo img {
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 14px 20px rgba(0,0,0,.6));
+}
+
+.club-grid .club-card:hover .club-logo::before { transform: scale(1.3); }
+
+/* ----- Nama, badge, statistik ----- */
+
+.club-grid .club-card h3 {
+    font-size: 17px;
+    letter-spacing: .4px;
+}
+
+.club-rank {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-family: var(--font-heading);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--gold-soft);
+    background: rgba(242,176,30,.14);
+    border: 1px solid rgba(242,176,30,.35);
+}
+
+.club-rank.first {
+    color: #0a1440;
+    background: linear-gradient(135deg, #ffd45e, #f2b01e);
+    border-color: transparent;
+}
+
+.club-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(42,71,151,.7);
+}
+
+.club-stats strong {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--gold-soft);
+    line-height: 1;
+}
+
+.club-stats span {
+    display: block;
+    margin-top: 5px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+
+.club-grid .club-actions { margin-top: 16px; }
+
+/* ----- Responsif ----- */
+
+@media (max-width: 900px) {
+    .club-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 650px) {
+    .club-grid { gap: 12px; }
+
+    .club-grid .club-card {
+        padding: 30px 10px 14px;
+        border-radius: 18px;
+    }
+
+    .club-grid .club-card .club-logo {
+        width: 92px;
+        height: 92px;
+        margin-bottom: 16px;
+    }
+
+    .club-grid .club-card h3 { font-size: 14px; }
+
+    .club-grid .club-card::after {
+        font-size: 90px;
+        top: -14px;
+    }
+
+    .club-stats strong { font-size: 16px; }
+
+    .club-group-letter { width: 42px; height: 42px; font-size: 19px; }
+}
 </style>
 </head>
 
@@ -4867,6 +5107,7 @@ async function loadClubs() {
     }
 }
 
+
 function renderClubs() {
 
     const container = document.getElementById("clubs-container");
@@ -4877,10 +5118,8 @@ function renderClubs() {
 
     if (!clubs.length) {
 
-        /* Sebelum data termuat, biarkan kosong dengan pesan */
         const empty = document.createElement("div");
         empty.className = "empty";
-        empty.style.gridColumn = "1 / -1";
         empty.innerHTML = `
             <div class="empty-icon">⚽</div>
             Belum ada klub.
@@ -4891,64 +5130,136 @@ function renderClubs() {
         return;
     }
 
-    const sortedClubs = [...clubs].sort((a, b) => {
+    const table = calculateStandings(clubs, matches);
 
-        const groupCompare = getClubGroup(a).localeCompare(getClubGroup(b));
+    const groups = [...new Set(clubs.map(getClubGroup))].sort();
 
-        if (groupCompare !== 0) return groupCompare;
+    groups.forEach(group => {
 
-        return String(a.name || "").localeCompare(String(b.name || ""));
-    });
+        const ranked = sortStandings(
+            table.filter(team => team.group === group)
+        );
 
-    sortedClubs.forEach(club => {
+        const anyPlayed = ranked.some(team => team.played > 0);
 
-        const logoUrl = club.logo_url || "";
-        const id = escapeHtml(club.$id);
+        /* Sebelum ada pertandingan: urut nama. Sesudahnya: urut peringkat. */
+        const items = ranked
+            .map((stat, index) => ({
+                club: getClubById(stat.id),
+                stat: stat,
+                rank: index + 1
+            }))
+            .filter(item => item.club);
 
-        const card = document.createElement("div");
-        card.className = "club-card";
+        if (!anyPlayed) {
+            items.sort((a, b) =>
+                String(a.club.name || "").localeCompare(String(b.club.name || ""))
+            );
+        }
 
-        card.innerHTML = `
-            <div class="club-logo">
-                ${
-                    logoUrl
-                        ? `<img src="${escapeHtml(logoUrl)}"
-                               alt="${escapeHtml(club.name || "Logo klub")}"
-                               onerror="this.replaceWith(document.createTextNode('⚽'))">`
-                        : "⚽"
-                }
-            </div>
+        const section = document.createElement("section");
+        section.className = "club-group";
 
-            <div class="club-info">
-
-                <h3>${escapeHtml(club.name || "Tanpa nama")}</h3>
-
-                <p>Grup ${escapeHtml(getClubGroup(club))}</p>
-
-                ${
-                    currentUser
-                        ? `
-                            <div class="club-actions">
-                                <button type="button"
-                                    class="btn-edit"
-                                    onclick="editClub('${id}')">
-                                    Edit
-                                </button>
-
-                                <button type="button"
-                                    class="btn-delete"
-                                    onclick="deleteClub('${id}')">
-                                    Hapus
-                                </button>
-                            </div>
-                        `
-                        : ""
-                }
-
+        section.innerHTML = `
+            <div class="club-group-head">
+                <div class="club-group-letter">${escapeHtml(group)}</div>
+                <div>
+                    <h3>GRUP ${escapeHtml(group)}</h3>
+                    <small>${items.length} KLUB</small>
+                </div>
+                <div class="club-group-line"></div>
             </div>
         `;
 
-        container.appendChild(card);
+        const grid = document.createElement("div");
+        grid.className = "club-grid";
+
+        items.forEach(({ club, stat, rank }) => {
+
+            const logoUrl = club.logo_url || "";
+            const id = escapeHtml(club.$id);
+
+            const card = document.createElement("div");
+            card.className = "club-card";
+            card.dataset.group = group;
+
+            card.innerHTML = `
+                ${
+                    anyPlayed
+                        ? `<div class="club-rank${rank === 1 ? " first" : ""}">#${rank}</div>`
+                        : ""
+                }
+
+                <div class="club-logo">
+                    ${
+                        logoUrl
+                            ? `<img src="${escapeHtml(logoUrl)}"
+                                   alt="${escapeHtml(club.name || "Logo klub")}"
+                                   onerror="this.replaceWith(document.createTextNode('⚽'))">`
+                            : "⚽"
+                    }
+                </div>
+
+                <div class="club-info">
+
+                    <h3>${escapeHtml(club.name || "Tanpa nama")}</h3>
+
+                    <div class="club-stats">
+                        <div><strong>${stat.played}</strong><span>MAIN</span></div>
+                        <div><strong>${stat.won}</strong><span>MENANG</span></div>
+                        <div><strong>${stat.points}</strong><span>POIN</span></div>
+                    </div>
+
+                    ${
+                        currentUser
+                            ? `
+                                <div class="club-actions">
+                                    <button type="button"
+                                        class="btn-edit"
+                                        onclick="editClub('${id}')">
+                                        Edit
+                                    </button>
+
+                                    <button type="button"
+                                        class="btn-delete"
+                                        onclick="deleteClub('${id}')">
+                                        Hapus
+                                    </button>
+                                </div>
+                            `
+                            : ""
+                    }
+
+                </div>
+            `;
+
+            grid.appendChild(card);
+        });
+
+        section.appendChild(grid);
+        container.appendChild(section);
+    });
+}
+
+/* Efek sorot cahaya yang mengikuti kursor */
+function initClubSpotlight() {
+
+    const container = document.getElementById("clubs-container");
+
+    if (!container || container.dataset.spotlight) return;
+
+    container.dataset.spotlight = "1";
+
+    container.addEventListener("pointermove", event => {
+
+        const card = event.target.closest(".club-card");
+
+        if (!card) return;
+
+        const box = card.getBoundingClientRect();
+
+        card.style.setProperty("--mx", (event.clientX - box.left) + "px");
+        card.style.setProperty("--my", (event.clientY - box.top) + "px");
     });
 }
 
@@ -7100,6 +7411,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     initializeAppwrite();
     setTournamentLogo();
     initRevealOnScroll();
+    initRevealOnScroll();
+    initClubSpotlight();
     await checkAdminSession();
 
     await loadClubs();
