@@ -5271,6 +5271,8 @@ async function logoutAdmin() {
 
         closeClubModal();
         closeMatchModal();
+        closeEventModal();
+        closeClubDetail();
 
         updateAdminUI();
 
@@ -6111,6 +6113,28 @@ async function saveMatch(event) {
                 : "Pertandingan kedua klub ini di grup tersebut sudah ada."
         );
         return;
+    }
+    /* ---------- SUSUNAN KNOCKOUT ---------- */
+
+    if (knockout) {
+
+        const expected = getExpectedKnockoutPair(stage);
+
+        if (expected) {
+
+            const chosen = [homeClubId, awayClubId].sort().join("|");
+            const needed = [...expected].sort().join("|");
+
+            if (chosen !== needed) {
+
+                const names = expected
+                    .map(id => getClubById(id)?.name || "?")
+                    .join(" vs ");
+
+                showToast(`Susunan ${stage} seharusnya: ${names}.`);
+                return;
+            }
+        }
     }
 
     /* ---------- SKOR ---------- */
@@ -7181,6 +7205,26 @@ async function saveEvent(event) {
         return;
     }
 
+    /* Peringatan: skor manual akan diganti hitungan dari kejadian */
+    const currentMatch = matches.find(item => item.$id === eventMatchId);
+
+    if (
+        GOAL_TYPES.includes(type) &&
+        currentMatch &&
+        currentMatch.status === "finished" &&
+        currentMatch.home_score != null &&
+        getEventScore(currentMatch).count === 0
+    ) {
+        const ok = confirm(
+            `Pertandingan ini sudah punya skor manual ` +
+            `${currentMatch.home_score} - ${currentMatch.away_score}.\n\n` +
+            `Mencatat gol akan mengganti skor dengan hitungan dari kejadian. ` +
+            `Pastikan kamu mencatat SEMUA gol pertandingan ini. Lanjutkan?`
+        );
+
+        if (!ok) return;
+    }
+
     savingEvent = true;
 
     try {
@@ -7459,6 +7503,28 @@ function getSeedClubId(group, position) {
     );
 
     return ranking[position]?.id || null;
+}
+
+/* Pasangan klub yang seharusnya main di babak knockout.
+   Mengembalikan null kalau lawannya belum bisa dipastikan. */
+function getExpectedKnockoutPair(stage) {
+
+    let pair;
+
+    if (stage === "Semifinal 1") {
+        pair = [getSeedClubId("A", 0), getSeedClubId("B", 1)];
+    } else if (stage === "Semifinal 2") {
+        pair = [getSeedClubId("B", 0), getSeedClubId("A", 1)];
+    } else if (stage === "Final") {
+        pair = [
+            getMatchWinnerId(getStageMatch("Semifinal 1")),
+            getMatchWinnerId(getStageMatch("Semifinal 2"))
+        ];
+    } else {
+        return null;
+    }
+
+    return pair.every(Boolean) ? pair : null;
 }
 
 function koClubHtml(clubId, fallbackLabel) {
@@ -7968,7 +8034,7 @@ requestAnimationFrame(() => requestAnimationFrame(() => {
                 if (t < 1) requestAnimationFrame(step);
             })(start);
         });
-    });
+    }));
 }
 
 function closeClubDetail() {
