@@ -3596,12 +3596,18 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
 
 .podium-crown {
     position: absolute;
-    top: -22px;
+    top: -26px;
     left: 50%;
-    transform: translateX(-50%);
-    font-size: 30px;
+    margin-left: -29px;
+    width: 58px;
     filter: drop-shadow(0 4px 10px rgba(250,204,21,.6));
     animation: floatLogo 3s ease-in-out infinite;
+}
+
+.podium-crown svg {
+    display: block;
+    width: 100%;
+    height: auto;
 }
 
 .podium-logo {
@@ -3722,7 +3728,7 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
     .podium-club { font-size: 10px; }
     .podium-goals strong { font-size: 28px; }
     .rank-1 .podium-goals strong { font-size: 36px; }
-    .podium-crown { font-size: 24px; top: -18px; }
+    .podium-crown { width: 44px; margin-left: -22px; top: -20px; }
 }
 /* ===== SKOR OTOMATIS: KOTAK SKOR & PAPAN SKOR ===== */
 
@@ -3773,6 +3779,83 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
     font-size: 28px;
     color: var(--gold-soft);
     white-space: nowrap;
+}
+/* =========================================================
+   KARTU PERTANDINGAN RINGKAS DI HP (ketuk untuk detail)
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .match {
+        gap: 8px;
+        padding: 12px 10px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Tanggal, jam, babak: satu baris kecil + penanda buka/tutup */
+    .match-info {
+        padding-bottom: 8px;
+        font-size: 11px;
+        position: relative;
+    }
+
+    .match-info::after {
+        content: "▾";
+        position: absolute;
+        right: 2px;
+        top: 0;
+        color: var(--gold-soft);
+        font-size: 13px;
+        transition: transform .3s var(--ease);
+    }
+
+    .match.open .match-info::after { transform: rotate(180deg); }
+
+    /* Klub dan skor lebih kecil */
+    .team-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .team,
+    .team:last-child { gap: 6px; }
+
+    .team-name {
+        font-size: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .score {
+        min-width: 66px;
+        padding: 6px 8px;
+        font-size: 20px;
+    }
+
+    /* Detail disembunyikan sampai kartu diketuk */
+    .match .venue,
+    .match .match-timeline { display: none; }
+
+    .match.open .venue,
+    .match.open .match-timeline {
+        display: block;
+        animation: pageIn .35s var(--ease);
+    }
+
+    .match.open .venue { display: block; }
+}
+
+@media (max-width: 380px) {
+
+    .team-logo { width: 34px; height: 34px; }
+
+    .score {
+        min-width: 58px;
+        font-size: 18px;
+    }
 }
 </style>
 </head>
@@ -7682,7 +7765,26 @@ function renderTopScorers() {
 
         return `
             <div class="podium-card rank-${p.rank}">
-                ${p.rank === 1 ? '<div class="podium-crown">👑</div>' : ""}
+                ${p.rank === 1 ? `
+                    <div class="podium-crown" title="Sepatu Emas">
+                        <svg viewBox="0 0 64 40" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="gbGold" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0" stop-color="#fff1b8"/>
+                                    <stop offset=".5" stop-color="#facc15"/>
+                                    <stop offset="1" stop-color="#b9770e"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M4 8c0-2 1.5-3.5 3.5-3.5h8c2 0 3.5 1.5 3.5 3.5v6c0 3 2.2 5.5 5.2 6.2l13.3 3c3.4.8 6.3 2.4 9 4.6l7 5.8c1.6 1.3.7 3.9-1.4 3.9H8c-2.2 0-4-1.800-4-4V8z"
+                                  fill="url(#gbGold)" stroke="#7a4c06" stroke-width="1.5" stroke-linejoin="round"/>
+                            <path d="M22 14l5 2.500M27 16.500l4.500 2.500M32 18.500l4 2.500"
+                                  stroke="#7a4c06" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                            <rect x="9" y="36" width="4" height="3" rx="1" fill="#7a4c06"/>
+                            <rect x="20" y="36" width="4" height="3" rx="1" fill="#7a4c06"/>
+                            <rect x="39" y="36" width="4" height="3" rx="1" fill="#7a4c06"/>
+                            <rect x="50" y="36" width="4" height="3" rx="1" fill="#7a4c06"/>
+                        </svg>
+                    </div>` : ""}
                 <div class="podium-logo">${logoHtml(p.logoUrl, p.clubName)}</div>
                 <div class="podium-medal">${p.rank}</div>
                 <div class="podium-name">${escapeHtml(p.name)}</div>
@@ -8481,6 +8583,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     initRevealOnScroll();
     initClubTilt();
     initLogoTilt();
+
+    /* HP: ketuk kartu pertandingan untuk membuka/menutup detail */
+    document.addEventListener("click", event => {
+
+        if (event.target.closest("button, a")) return;
+
+        const card = event.target.closest(".match");
+
+        if (!card) return;
+
+        if (window.matchMedia("(max-width: 650px)").matches) {
+            card.classList.toggle("open");
+        }
+    });
 document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeClubDetail();
 });
