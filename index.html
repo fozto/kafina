@@ -4071,11 +4071,176 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
         height: 46px;
     }
 }
+/* =========================================================
+   EFEK BARU
+========================================================= */
+
+/* ----- 1. Skor menghitung naik ----- */
+.score-num {
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ----- 5. Partikel emas ----- */
+#gold-dust {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* ----- 6. Juara: piala, logo berayun, konfeti ----- */
+.confetti-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3000;
+    pointer-events: none;
+}
+
+.champion-card.has-champion {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(242,176,30,.45), 0 16px 50px rgba(242,176,30,.22);
+}
+
+.champion-card.has-champion::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 38%;
+    width: 340px;
+    height: 340px;
+    margin: -170px 0 0 -170px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(rgba(242,176,30,.20) 0 8deg, transparent 8deg 20deg);
+    -webkit-mask: radial-gradient(circle, #000 15%, transparent 68%);
+            mask: radial-gradient(circle, #000 15%, transparent 68%);
+    animation: spin 24s linear infinite;
+    pointer-events: none;
+}
+
+.champion-card.has-champion > * { position: relative; }
+
+.champion-trophy {
+    font-size: 36px;
+    line-height: 1;
+    margin-bottom: 6px;
+    animation: trophyShine 2.4s ease-in-out infinite;
+}
+
+@keyframes trophyShine {
+    0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 6px rgba(250,204,21,.4)); }
+    50%      { transform: scale(1.12); filter: drop-shadow(0 0 18px rgba(255,212,94,.95)); }
+}
+
+/* Logo juara berputar pelan ke kiri-kanan (tulisan logo tidak terbalik) */
+.champion-card.has-champion .champion-logo img {
+    animation:
+        championSwing 6s ease-in-out infinite,
+        championShine 3s ease-in-out infinite;
+}
+
+@keyframes championSwing {
+    0%, 100% { transform: perspective(700px) rotateY(-24deg); }
+    50%      { transform: perspective(700px) rotateY(24deg); }
+}
+
+@keyframes championShine {
+    0%, 100% { filter: drop-shadow(0 8px 20px rgba(250,204,21,.35)); }
+    50%      { filter: drop-shadow(0 8px 34px rgba(255,212,94,.85)); }
+}
+
+/* ----- 7. Garis menu geser mulus ----- */
+.nav-inner { position: relative; }
+
+/* Garis statis lama dimatikan, diganti penanda yang bergeser */
+.nav-button.active { border-bottom-color: transparent; }
+
+.nav-indicator {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 0;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(90deg, #ffd45e, #f2b01e);
+    box-shadow: 0 0 14px rgba(242,176,30,.7);
+    pointer-events: none;
+}
+
+.nav-indicator.ready {
+    transition: transform .45s var(--ease), width .45s var(--ease);
+}
+
+/* ----- 8. Header mengecil saat di-scroll ----- */
+nav { top: var(--header-h, 79px); }
+
+header .header-inner,
+header .brand-logo,
+header .brand h1,
+header .admin-button {
+    transition: padding .3s var(--ease), width .3s var(--ease), height .3s var(--ease),
+                font-size .3s var(--ease);
+}
+
+header .brand span {
+    max-height: 20px;
+    transition: max-height .3s var(--ease), opacity .25s, margin .3s;
+}
+
+header.scrolled {
+    background: linear-gradient(135deg, rgba(3,8,26,.72), rgba(8,20,64,.72), rgba(10,28,84,.72));
+    backdrop-filter: blur(18px);
+}
+
+header.scrolled .header-inner { padding-top: 7px; padding-bottom: 7px; }
+
+header.scrolled .brand-logo { width: 34px; height: 34px; }
+header.scrolled .brand-logo.has-logo { width: 24px; height: 34px; }
+
+header.scrolled .brand h1 { font-size: 17px; }
+
+header.scrolled .brand span {
+    max-height: 0;
+    margin: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+header.scrolled .admin-button {
+    padding: 6px 16px;
+    font-size: 12px;
+}
+
+/* ----- 10. Top Skor: podium naik + bar terisi ----- */
+.podium-card { animation: podiumRise .8s var(--ease) backwards; }
+.podium-card.rank-3 { animation-delay: .10s; }
+.podium-card.rank-2 { animation-delay: .40s; }
+.podium-card.rank-1 { animation-delay: .75s; }
+
+@keyframes podiumRise {
+    from { opacity: 0; transform: translateY(80px) scale(.92); }
+}
+
+.scorer-bar i {
+    animation: barFill 1s var(--ease) backwards;
+    animation-delay: calc(.95s + var(--i, 0) * .1s);
+}
+
+@keyframes barFill {
+    from { width: 0; }
+}
 </style>
 </head>
 
-
 <body>
+
+<canvas id="gold-dust" aria-hidden="true"></canvas>
 
 
 <header>
@@ -5681,6 +5846,453 @@ function initializeAppwrite() {
         return false;
     }
 }
+/* =========================================================
+   EFEK 1: SKOR MENGHITUNG NAIK
+========================================================= */
+
+const scoreDone = new Set();
+let scoreObserver = null;
+
+function scoreKey(el) {
+    return `${el.dataset.mid}|${el.dataset.home}-${el.dataset.away}`;
+}
+
+function watchScore(card, match) {
+
+    const num = card.querySelector(".score-num");
+
+    if (!num) return;
+
+    num.dataset.mid = match.$id;
+
+    if (
+        !("IntersectionObserver" in window) ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        scoreDone.has(scoreKey(num))
+    ) {
+        return;
+    }
+
+    /* Mulai dari 0, lalu naik saat kartu terlihat */
+    num.textContent = "0 - 0";
+
+    if (!scoreObserver) {
+
+        scoreObserver = new IntersectionObserver(entries => {
+
+            entries.forEach(entry => {
+
+                if (!entry.isIntersecting) return;
+
+                scoreObserver.unobserve(entry.target);
+
+                countUpScore(entry.target);
+            });
+
+        }, { threshold: 0.6 });
+    }
+
+    scoreObserver.observe(num);
+}
+
+function countUpScore(el) {
+
+    const home = Number(el.dataset.home);
+    const away = Number(el.dataset.away);
+    const key = scoreKey(el);
+
+    /* Sudah pernah dianimasikan, atau 0-0: langsung tampilkan */
+    if (scoreDone.has(key) || (home === 0 && away === 0)) {
+        el.textContent = `${home} - ${away}`;
+        scoreDone.add(key);
+        return;
+    }
+
+    const start = performance.now();
+
+    (function step(now) {
+
+        const t = Math.min((now - start) / 900, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+
+        el.textContent =
+            `${Math.round(home * eased)} - ${Math.round(away * eased)}`;
+
+        if (t < 1) {
+            requestAnimationFrame(step);
+        } else {
+            scoreDone.add(key);
+        }
+    })(start);
+}
+
+
+/* =========================================================
+   EFEK 5: PARTIKEL EMAS (hanya di Beranda)
+========================================================= */
+
+function initGoldDust() {
+
+    const canvas = document.getElementById("gold-dust");
+
+    if (
+        !canvas ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+        return;
+    }
+
+    const ctx = canvas.getContext("2d");
+    const count = window.innerWidth < 650 ? 24 : 46;
+
+    let w = 0;
+    let h = 0;
+    let cleared = false;
+
+    function resize() {
+
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
+        w = window.innerWidth;
+        h = window.innerHeight;
+
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function spawn(initial) {
+        return {
+            x: Math.random() * w,
+            y: initial ? Math.random() * h : h + 10,
+            r: 0.6 + Math.random() * 1.8,
+            vy: 0.12 + Math.random() * 0.35,
+            vx: (Math.random() - 0.5) * 0.15,
+            phase: Math.random() * 6.28,
+            speed: 0.6 + Math.random() * 1.2
+        };
+    }
+
+    resize();
+
+    const particles = Array.from({ length: count }, () => spawn(true));
+
+    window.addEventListener("resize", resize);
+
+    function frame(time) {
+
+        const homeActive = document
+            .getElementById("page-home")
+            ?.classList.contains("active");
+
+        /* Tab disembunyikan atau bukan Beranda: berhenti menggambar */
+        if (document.hidden || !homeActive) {
+
+            if (!cleared) {
+                ctx.clearRect(0, 0, w, h);
+                cleared = true;
+            }
+
+            requestAnimationFrame(frame);
+            return;
+        }
+
+        cleared = false;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.shadowColor = "rgba(242,176,30,.9)";
+        ctx.shadowBlur = 8;
+
+        const t = time / 1000;
+
+        particles.forEach((p, i) => {
+
+            p.y -= p.vy;
+            p.x += p.vx + Math.sin(t * 0.5 + p.phase) * 0.15;
+
+            if (p.y < -10) {
+                particles[i] = spawn(false);
+                return;
+            }
+
+            const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(t * p.speed + p.phase));
+
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(255,212,94,${twinkle * 0.7})`;
+            ctx.arc(p.x, p.y, p.r, 0, 6.283);
+            ctx.fill();
+        });
+
+        requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+}
+
+
+/* =========================================================
+   EFEK 6: KONFETI JUARA
+========================================================= */
+
+let confettiShownFor = null;
+let confettiRunning = false;
+
+function launchConfetti() {
+
+    if (confettiRunning) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    confettiRunning = true;
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "confetti-canvas";
+    document.body.appendChild(canvas);
+
+    const ctx = canvas.getContext("2d");
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const colors = ["#ffd45e", "#f2b01e", "#ffffff", "#2457c5", "#3ddc7a"];
+    const total = W < 650 ? 90 : 160;
+
+    const pieces = Array.from({ length: total }, () => ({
+        x: Math.random() * W,
+        y: -20 - Math.random() * H * 0.6,
+        w: 6 + Math.random() * 6,
+        h: 8 + Math.random() * 8,
+        vy: 2.2 + Math.random() * 3,
+        vx: (Math.random() - 0.5) * 2,
+        rot: Math.random() * 6.28,
+        vr: (Math.random() - 0.5) * 0.3,
+        sway: Math.random() * 6.28,
+        color: colors[Math.floor(Math.random() * colors.length)]
+    }));
+
+    const startTime = performance.now();
+
+    function frame(now) {
+
+        ctx.clearRect(0, 0, W, H);
+
+        let alive = 0;
+
+        pieces.forEach(p => {
+
+            p.sway += 0.05;
+            p.y += p.vy;
+            p.x += p.vx + Math.sin(p.sway) * 0.8;
+            p.rot += p.vr;
+
+            if (p.y > H + 30) return;
+
+            alive++;
+
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+        });
+
+        if (alive && now - startTime < 9000) {
+            requestAnimationFrame(frame);
+        } else {
+            canvas.remove();
+            confettiRunning = false;
+        }
+    }
+
+    requestAnimationFrame(frame);
+}
+
+/* Konfeti keluar sekali per juara, saat halaman Knockout sedang dibuka */
+function maybeCelebrate() {
+
+    const page = document.getElementById("page-knockout");
+
+    if (!page || !page.classList.contains("active")) return;
+
+    const championId = getMatchWinnerId(getStageMatch("Final"));
+
+    if (!championId || confettiShownFor === championId) return;
+
+    confettiShownFor = championId;
+
+    setTimeout(launchConfetti, 350);
+}
+
+
+/* =========================================================
+   EFEK 7: GARIS MENU BERGESER
+========================================================= */
+
+function moveNavIndicator() {
+
+    const inner = document.querySelector(".nav-inner");
+    const bar = inner?.querySelector(".nav-indicator");
+    const active = inner?.querySelector(".nav-button.active");
+
+    if (!bar || !active) return;
+
+    bar.style.width = active.offsetWidth + "px";
+    bar.style.transform = `translateX(${active.offsetLeft}px)`;
+
+    /* Geser menu supaya tombol aktif berada di tengah (penting di HP) */
+    inner.scrollTo({
+        left: active.offsetLeft - (inner.clientWidth - active.offsetWidth) / 2,
+        behavior: "smooth"
+    });
+}
+
+function initNavIndicator() {
+
+    const inner = document.querySelector(".nav-inner");
+
+    if (!inner || inner.querySelector(".nav-indicator")) return;
+
+    const bar = document.createElement("span");
+    bar.className = "nav-indicator";
+    inner.appendChild(bar);
+
+    moveNavIndicator();
+
+    /* Aktifkan transisi setelah posisi awal terpasang */
+    requestAnimationFrame(() =>
+        requestAnimationFrame(() => bar.classList.add("ready"))
+    );
+
+    window.addEventListener("resize", moveNavIndicator);
+
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(moveNavIndicator);
+    }
+}
+
+
+/* =========================================================
+   EFEK 8: HEADER MENGECIL SAAT SCROLL
+========================================================= */
+
+function initHeaderShrink() {
+
+    const header = document.querySelector("header");
+
+    if (!header) return;
+
+    /* Posisi menu mengikuti tinggi header yang berubah */
+    function syncHeight() {
+        document.documentElement.style.setProperty(
+            "--header-h",
+            header.offsetHeight + "px"
+        );
+    }
+
+    if ("ResizeObserver" in window) {
+        new ResizeObserver(syncHeight).observe(header);
+    }
+
+    window.addEventListener("resize", syncHeight);
+    syncHeight();
+
+    let scrolled = false;
+    let ticking = false;
+
+    function update() {
+
+        const y = window.scrollY;
+
+        /* Batas masuk dan keluar dibedakan agar tidak berkedip */
+        if (!scrolled && y > 60) scrolled = true;
+        else if (scrolled && y < 10) scrolled = false;
+
+        header.classList.toggle("scrolled", scrolled);
+
+        ticking = false;
+    }
+
+    window.addEventListener("scroll", () => {
+
+        if (ticking) return;
+
+        ticking = true;
+
+        requestAnimationFrame(update);
+
+    }, { passive: true });
+
+    update();
+}
+
+
+/* =========================================================
+   EFEK 11: BARIS KLASEMEN BERGESER
+========================================================= */
+
+const seenStandings = {};
+
+function playStandingsMotion() {
+
+    const reduced =
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    ["standings-a", "standings-b"].forEach(id => {
+
+        const tbody = document.getElementById(id);
+
+        if (!tbody) return;
+
+        const rows = [...tbody.querySelectorAll("tr[data-id]")];
+
+        const order = rows.map(tr => tr.dataset.id);
+        const before = seenStandings[id];
+
+        /* Catat urutan yang sekarang dilihat pengunjung */
+        seenStandings[id] = order;
+
+        if (reduced || !before || !rows.length) return;
+
+        const rowHeight = rows[0].getBoundingClientRect().height;
+
+        if (!rowHeight) return;
+
+        rows.forEach((tr, newIndex) => {
+
+            const oldIndex = before.indexOf(tr.dataset.id);
+
+            if (oldIndex === -1 || oldIndex === newIndex) return;
+
+            const distance = (oldIndex - newIndex) * rowHeight;
+            const movedUp = newIndex < oldIndex;
+
+            tr.animate(
+                [
+                    {
+                        transform: `translateY(${distance}px)`,
+                        backgroundColor: movedUp
+                            ? "rgba(61,220,122,.28)"
+                            : "rgba(239,68,68,.22)"
+                    },
+                    {
+                        transform: "translateY(0)",
+                        backgroundColor: "rgba(0,0,0,0)"
+                    }
+                ],
+                {
+                    duration: 750,
+                    easing: "cubic-bezier(.2,.8,.2,1)"
+                }
+            );
+        });
+    });
+}
 
 
 /* =========================================================
@@ -5706,8 +6318,12 @@ function showPage(pageName, button) {
     if (button) {
         button.classList.add("active");
     }
-}
 
+    moveNavIndicator();
+
+    if (pageName === "knockout") maybeCelebrate();
+    if (pageName === "standings") playStandingsMotion();
+}
 
 /* =========================================================
    ADMIN LOGIN / LOGOUT
@@ -7188,6 +7804,12 @@ function createMatchElement(match) {
         : "";
 
     const id = escapeHtml(match.$id);
+
+    const scoreHtml = isFinished
+        ? `<span class="score-num"
+                 data-home="${Number(match.home_score ?? 0)}"
+                 data-away="${Number(match.away_score ?? 0)}">${Number(match.home_score ?? 0)} - ${Number(match.away_score ?? 0)}</span>`
+        : escapeHtml(scoreText);
     const eventCount = getEventsForMatch(match.$id).length;
 
     /* Pemenang (skor, atau adu penalti kalau seri). Seri di babak grup = tanpa penanda */
@@ -7254,7 +7876,7 @@ function createMatchElement(match) {
             </div>
 
             <div class="score">
-                ${escapeHtml(scoreText)}
+                ${scoreHtml}
                 <small>${escapeHtml(scoreCaption)}</small>
             </div>
 
@@ -7283,6 +7905,8 @@ function createMatchElement(match) {
             <span class="chev">▾</span>
         </div>
     `;
+
+    watchScore(element, match);
 
     return element;
 }
@@ -8023,10 +8647,11 @@ function renderTopScorers() {
 
     /* ---------- PERINGKAT 4 DST ---------- */
 
-    ranked.slice(3).forEach(player => {
+    ranked.slice(3).forEach((player, i) => {
 
         const row = document.createElement("div");
         row.className = "scorer";
+        row.style.setProperty("--i", i);
 
         const penaltyNote = player.penalties
             ? ` <small>(${player.penalties} pen)</small>`
@@ -8285,7 +8910,9 @@ function renderKnockout() {
 
     championRound.innerHTML = `
         <h3>JUARA</h3>
-        <div class="card champion-card">
+        <div class="card champion-card${champion ? " has-champion" : ""}"
+             ${champion ? 'onclick="launchConfetti()" title="Ketuk untuk konfeti"' : ""}>
+            ${champion ? '<div class="champion-trophy">🏆</div>' : ""}
             <div class="champion-logo">${logo}</div>
             <div class="champion-name">
                 ${escapeHtml(champion ? champion.name : "KAFINA CUP")}
@@ -8299,6 +8926,8 @@ function renderKnockout() {
     container.appendChild(semiRound);
     container.appendChild(finalRound);
     container.appendChild(championRound);
+
+    maybeCelebrate();
 }
 function updateMatchStats() {
 
@@ -8454,6 +9083,7 @@ function renderMatchStandings() {
         sorted.forEach((team, index) => {
 
             const tr = document.createElement("tr");
+            tr.dataset.id = team.id;
 
             if (index < 2) {
                 tr.className = "qualified";
@@ -8525,6 +9155,11 @@ function renderMatchStandings() {
             tbody.appendChild(tr);
         });
     });
+
+    /* Kalau halaman Klasemen sedang dibuka, gerakkan baris yang berpindah */
+    if (document.getElementById("page-standings")?.classList.contains("active")) {
+        playStandingsMotion();
+    }
 }
 
 /* ---------- Detail klub (emblem diklik) ---------- */
@@ -8812,6 +9447,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     initRevealOnScroll();
     initClubTilt();
     initLogoTilt();
+    initGoldDust();
+    initNavIndicator();
+    initHeaderShrink();
 
     /* HP: ketuk kartu pertandingan untuk membuka/menutup detail */
     document.addEventListener("click", event => {
@@ -8837,6 +9475,7 @@ document.addEventListener("keydown", e => {
     await loadMatches();
     await loadEvents();
 });
+
 </script>
 
 </body>
