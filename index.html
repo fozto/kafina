@@ -11,11 +11,6 @@
 <meta name="theme-color" content="#040a1f">
 <link rel="icon" type="image/png" href="https://res.cloudinary.com/dmecuyazc/image/upload/w_64/v1792785206/kafina_cup_altodz.png">
 <style>
-/* =========================================================
-   KAFINA CUP
-   DARK GREEN / PREMIUM FOOTBALL
-========================================================= */
-
 :root {
     --bg: #020806;
     --bg-2: #04100a;
@@ -25,23 +20,15 @@
     --green-dark: #052e16;
     --green-light: #22c55e;
     --green-soft: #4ade80;
-
     --text: #f1f5f3;
     --text-2: #cbd5d1;
     --muted: #82968b;
-
     --border: #153b28;
     --border-light: #1d4d32;
-
     --red: #ef4444;
     --yellow: #f59e0b;
-
     --radius: 16px;
 }
-
-/* =========================================================
-   RESET
-========================================================= */
 
 * {
     margin: 0;
@@ -3780,44 +3767,108 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
     color: var(--gold-soft);
     white-space: nowrap;
 }
+
 /* =========================================================
-   KARTU PERTANDINGAN RINGKAS DI HP (ketuk untuk detail)
+   KARTU PERTANDINGAN: DETAIL LIPAT + PANEL ADMIN
 ========================================================= */
 
+/* Desktop: detail tampil seperti biasa di dalam grid kartu */
+.match-detail,
+.match-detail-inner { display: contents; }
+
+.match-toggle { display: none; }
+
+.match-admin {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-light);
+}
+
+.match-admin-label {
+    margin-right: auto;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--gold-soft);
+    opacity: .85;
+}
+
+.ma-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 14px;
+    border-radius: 11px;
+    font-family: var(--font-heading);
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: 1px solid transparent;
+    transition: transform .2s var(--ease), box-shadow .2s, background .2s;
+}
+
+.ma-btn:active { transform: scale(.95); }
+.ma-btn:hover { transform: translateY(-1px); }
+
+.ma-btn.edit {
+    background: rgba(36,87,197,.22);
+    border-color: rgba(93,143,240,.5);
+    color: #bcd2ff;
+}
+
+.ma-btn.events {
+    background: linear-gradient(135deg, #ffd45e, #f2b01e 60%, #d98f0b);
+    color: #0a1440;
+    box-shadow: 0 6px 18px rgba(242,176,30,.28);
+}
+
+.ma-btn.del {
+    background: rgba(239,68,68,.10);
+    border-color: rgba(239,68,68,.35);
+    color: #fca5a5;
+}
+
+/* ---------- HP ---------- */
 @media (max-width: 650px) {
 
     .match {
-        gap: 8px;
-        padding: 12px 10px;
+        grid-template-columns: 1fr;
+        gap: 0;
+        padding: 0;
+        border-radius: 16px;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
     }
 
-    /* Tanggal, jam, babak: satu baris kecil + penanda buka/tutup */
     .match-info {
-        padding-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 14px;
+        text-align: left;
         font-size: 11px;
-        position: relative;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255,255,255,.02);
     }
 
-    .match-info::after {
-        content: "▾";
-        position: absolute;
-        right: 2px;
-        top: 0;
-        color: var(--gold-soft);
-        font-size: 13px;
-        transition: transform .3s var(--ease);
+    .match-info strong { display: inline; margin: 0; }
+    .match-info > div { margin-left: auto; }
+    .match-info .stage-badge { margin-top: 0; }
+
+    .teams {
+        padding: 14px 12px;
+        grid-template-columns: 1fr 72px 1fr;
+        gap: 8px;
     }
 
-    .match.open .match-info::after { transform: rotate(180deg); }
-
-    /* Klub dan skor lebih kecil */
-    .team-logo {
-        width: 40px;
-        height: 40px;
-    }
-
+    .team-logo { width: 40px; height: 40px; }
     .team,
     .team:last-child { gap: 6px; }
 
@@ -3835,27 +3886,101 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
         font-size: 20px;
     }
 
-    /* Detail disembunyikan sampai kartu diketuk */
-    .match .venue,
-    .match .match-timeline { display: none; }
-
-    .match.open .venue,
-    .match.open .match-timeline {
-        display: block;
-        animation: pageIn .35s var(--ease);
+    /* Detail terlipat sampai kartu diketuk */
+    .match-detail {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows .4s var(--ease);
     }
 
-    .match.open .venue { display: block; }
+    .match-detail-inner {
+        display: block;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .match.open .match-detail { grid-template-rows: 1fr; }
+
+    .match .venue {
+        text-align: left;
+        padding: 12px 14px 4px;
+        border-top: 1px dashed var(--border-light);
+        opacity: 0;
+        transition: opacity .3s .1s;
+    }
+
+    .match-timeline {
+        padding: 10px 14px 12px;
+        border-top: none;
+        opacity: 0;
+        transition: opacity .3s .15s;
+    }
+
+    /* Panel admin: 3 tombol sama lebar, ikon di atas */
+    .match-admin {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 6px 12px 14px;
+        padding: 12px;
+        border: 1px solid rgba(242,176,30,.28);
+        border-radius: 14px;
+        background: rgba(242,176,30,.05);
+        opacity: 0;
+        transition: opacity .3s .2s;
+    }
+
+    .match.open .venue,
+    .match.open .match-timeline,
+    .match.open .match-admin { opacity: 1; }
+
+    .match-admin-label {
+        grid-column: 1 / -1;
+        margin: 0 0 2px;
+        text-align: center;
+    }
+
+    .ma-btn {
+        flex-direction: column;
+        gap: 4px;
+        padding: 10px 4px;
+        font-size: 11px;
+    }
+
+    .ma-btn .ic { font-size: 18px; line-height: 1; }
+
+    /* Tombol buka/tutup di bawah kartu */
+    .match-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px;
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        color: var(--gold-soft);
+    }
+
+    .match-toggle .count {
+        padding: 1px 8px;
+        border-radius: 99px;
+        background: rgba(242,176,30,.16);
+        font-size: 10px;
+    }
+
+    .match-toggle .chev { transition: transform .3s var(--ease); }
+    .match.open .match-toggle .chev { transform: rotate(180deg); }
+
+    .match.open .match-toggle .t-open,
+    .match:not(.open) .match-toggle .t-close { display: none; }
 }
 
 @media (max-width: 380px) {
-
     .team-logo { width: 34px; height: 34px; }
-
-    .score {
-        min-width: 58px;
-        font-size: 18px;
-    }
+    .teams { grid-template-columns: 1fr 60px 1fr; }
+    .score { min-width: 58px; font-size: 18px; }
 }
 </style>
 </head>
@@ -3864,32 +3989,20 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
 <body>
 
 
-<!-- =========================================================
-     HEADER
-========================================================= -->
-
 <header>
-
 <div class="header-inner">
-
     <div class="brand">
-
         <div class="brand-logo">
             KC
         </div>
-
         <div>
 
             <h1>KAFINA CUP</h1>
-
             <span>
                 Football Competition
             </span>
-
         </div>
-
     </div>
-
 
     <button
         class="admin-button"
@@ -6948,6 +7061,9 @@ function setTournamentLogo() {
     }
 }
 
+/* Ingat kartu yang terbuka, supaya tidak menutup saat data dimuat ulang */
+const openMatches = new Set();
+
 function createMatchElement(match) {
 
     const homeClub = getClubById(match.home_club_id);
@@ -6982,6 +7098,7 @@ function createMatchElement(match) {
         : "";
 
     const id = escapeHtml(match.$id);
+    const eventCount = getEventsForMatch(match.$id).length;
 
     function logoHtml(url, name) {
         return url
@@ -6991,8 +7108,34 @@ function createMatchElement(match) {
             : "⚽";
     }
 
+    const adminHtml = currentUser
+        ? `
+            <div class="match-admin">
+                <div class="match-admin-label">PANEL ADMIN</div>
+
+                <button type="button" class="ma-btn edit"
+                    onclick="editMatch('${id}')">
+                    <span class="ic">✏️</span>Edit
+                </button>
+
+                <button type="button" class="ma-btn events"
+                    onclick="openEventModal('${id}')">
+                    <span class="ic">⚽</span>Gol &amp; Kartu
+                </button>
+
+                <button type="button" class="ma-btn del"
+                    onclick="deleteMatch('${id}')">
+                    <span class="ic">🗑️</span>Hapus
+                </button>
+            </div>
+        `
+        : "";
+
     const element = document.createElement("div");
     element.className = "match";
+    element.dataset.id = match.$id;
+
+    if (openMatches.has(match.$id)) element.classList.add("open");
 
     element.innerHTML = `
 
@@ -7021,46 +7164,24 @@ function createMatchElement(match) {
 
         </div>
 
-        <div class="venue">
+        <div class="match-detail">
+            <div class="match-detail-inner">
 
-            📍 ${escapeHtml(match.venue || "-")}
+                <div class="venue">📍 ${escapeHtml(match.venue || "-")}</div>
 
-            ${
-                currentUser
-                    ? `
-                        <div style="
-                            display:flex;
-                            justify-content:flex-end;
-                            gap:6px;
-                            margin-top:8px;
-                        ">
+                ${buildTimelineHtml(match)}
 
-                            <button type="button"
-                                class="btn-edit"
-                                onclick="editMatch('${id}')">
-                                Edit
-                            </button>
+                ${adminHtml}
 
-                            <button type="button"
-                                class="btn-edit"
-                                onclick="openEventModal('${id}')">
-                                Gol &amp; Kartu
-                            </button>
-
-                            <button type="button"
-                                class="btn-delete"
-                                onclick="deleteMatch('${id}')">
-                                Hapus
-                            </button>
-
-                        </div>
-                    `
-                    : ""
-            }
-
+            </div>
         </div>
 
-        ${buildTimelineHtml(match)}
+        <div class="match-toggle">
+            <span class="t-open">LIHAT DETAIL</span>
+            <span class="t-close">TUTUP</span>
+            ${eventCount ? `<span class="count">${eventCount} kejadian</span>` : ""}
+            <span class="chev">▾</span>
+        </div>
     `;
 
     return element;
@@ -8559,21 +8680,15 @@ function initRevealOnScroll() {
         subtree: true
     });
 }
-/* =========================================================
-   INITIALIZE
-========================================================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
 
     console.log("KAFINA CUP loading...");
-
     const groupSelect = document.getElementById("match-group");
-
     if (groupSelect) {
         groupSelect.addEventListener("change", populateMatchClubOptions);
     }
         const stageSelect = document.getElementById("match-stage");
-
     if (stageSelect) {
         stageSelect.addEventListener("change", updateMatchFormStage);
     }
@@ -8587,25 +8702,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     /* HP: ketuk kartu pertandingan untuk membuka/menutup detail */
     document.addEventListener("click", event => {
 
-        if (event.target.closest("button, a")) return;
+        /* Abaikan klik pada tombol dan area detail */
+        if (event.target.closest("button, a, .match-detail")) return;
 
         const card = event.target.closest(".match");
 
         if (!card) return;
+        if (!window.matchMedia("(max-width: 650px)").matches) return;
 
-        if (window.matchMedia("(max-width: 650px)").matches) {
-            card.classList.toggle("open");
-        }
+        const open = card.classList.toggle("open");
+
+        if (open) openMatches.add(card.dataset.id);
+        else openMatches.delete(card.dataset.id);
     });
 document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeClubDetail();
 });
     await checkAdminSession();
-
     await loadClubs();
-
     await loadMatches();
-
     await loadEvents();
 });
 </script>
