@@ -3139,6 +3139,77 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
 @media (prefers-reduced-motion: reduce) {
     .fc { transform: none !important; }
 }
+/* =========================================================
+   KARTU KLUB: VERSI GELAP
+========================================================= */
+
+/* Juara grup / default: navy tua */
+.fc {
+    --a: #274aa8;
+    --b: #0f2263;
+    --c: #050b29;
+    --ink: #f4f6ff;
+    --soft: rgba(244,246,255,.68);
+    --line: rgba(255,255,255,.26);
+}
+
+/* Peringkat 2: biru royal gelap */
+.fc.tier-2 {
+    --a: #3a74e0;
+    --b: #1a45a8;
+    --c: #0a1f55;
+    --ink: #f4f6ff;
+    --soft: rgba(244,246,255,.70);
+    --line: rgba(255,255,255,.28);
+}
+
+/* Peringkat 3: hijau lapangan gelap */
+.fc.tier-3 {
+    --a: #1f9d4b;
+    --b: #116038;
+    --c: #05281a;
+    --ink: #f2fff7;
+    --soft: rgba(242,255,247,.70);
+    --line: rgba(255,255,255,.26);
+}
+
+/* Peringkat 4: abu grafit gelap */
+.fc.tier-4 {
+    --a: #5d6a8c;
+    --b: #2c3455;
+    --c: #0f1329;
+    --ink: #f4f6ff;
+    --soft: rgba(244,246,255,.66);
+    --line: rgba(255,255,255,.24);
+}
+
+/* Bingkai dalam dan corak disesuaikan untuk latar gelap */
+.fc::before {
+    background:
+        repeating-linear-gradient(115deg,
+            rgba(255,255,255,.045) 0 2.4cqw, transparent 2.4cqw 5.2cqw),
+        linear-gradient(160deg,
+            rgba(255,255,255,.18), rgba(255,255,255,0) 42%, rgba(0,0,0,.28));
+    box-shadow: inset 0 0 0 .5cqw rgba(255,255,255,.18);
+}
+
+/* Kilau holografik lebih halus agar tidak memutihkan kartu */
+.fc::after {
+    mix-blend-mode: screen;
+    opacity: .14;
+}
+
+.fc-wrap:hover .fc::after { opacity: .5; }
+
+.fc-rank {
+    background: rgba(255,255,255,.12);
+    color: var(--ink);
+}
+
+.fc-wrap:hover {
+    filter: drop-shadow(0 26px 30px rgba(0,0,0,.65))
+            drop-shadow(0 0 22px rgba(58,116,224,.28));
+}
 </style>
 </head>
 
