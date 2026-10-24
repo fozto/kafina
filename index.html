@@ -2581,7 +2581,6 @@ nav { background: rgba(4,10,31,.96); }
     background: linear-gradient(90deg, transparent, var(--gold), transparent);
 }
 
-.stats .stat:last-child .stat-value { color: var(--pitch-soft); }
 
 .match::before { background: linear-gradient(var(--gold-soft), transparent); }
 
@@ -3982,6 +3981,96 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
     .teams { grid-template-columns: 1fr 60px 1fr; }
     .score { min-width: 58px; font-size: 18px; }
 }
+/* =========================================================
+   PENANDA PEMENANG
+========================================================= */
+
+.team { transition: opacity .3s, filter .3s; }
+
+/* Pemenang: nama tebal emas + logo bercahaya */
+.team.win .team-name {
+    color: var(--gold-soft);
+    font-weight: 900;
+    text-shadow: 0 0 14px rgba(255,212,94,.45);
+}
+
+.team.win .team-logo img {
+    filter:
+        drop-shadow(0 0 10px rgba(242,176,30,.75))
+        drop-shadow(0 6px 12px rgba(0,0,0,.6));
+}
+
+/* Yang kalah: sedikit redup */
+.team.lose { opacity: .55; }
+
+.team.lose .team-logo img {
+    filter: grayscale(.55) drop-shadow(0 6px 12px rgba(0,0,0,.6));
+}
+
+.team.lose .team-name { font-weight: 600; }
+#stat-status {
+    font-size: 18px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+@media (max-width: 650px) {
+    #stat-status { font-size: 15px; }
+}
+/* =========================================================
+   PERBAIKAN: LOGO KLUB DI HP (logo di atas, nama di bawah)
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .teams {
+        grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
+        gap: 6px;
+        align-items: start;
+    }
+
+    .team,
+    .team:last-child {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        text-align: center;
+    }
+
+    /* Klub tandang: urutan HTML-nya nama dulu, jadi dibalik agar logo tetap di atas */
+    .team:last-child {
+        flex-direction: column-reverse;
+        justify-content: flex-end;
+    }
+
+    .team-logo {
+        width: 54px;
+        height: 54px;
+    }
+
+    .team-name {
+        width: 100%;
+        text-align: center;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .score {
+        align-self: center;
+    }
+}
+
+@media (max-width: 380px) {
+
+    .teams { grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); }
+
+    .team-logo {
+        width: 46px;
+        height: 46px;
+    }
+}
 </style>
 </head>
 
@@ -4189,9 +4278,10 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
 
         <div
             class="stat-value"
+            id="stat-status"
             style="font-size:18px"
         >
-            ACTIVE
+            BELUM MULAI
         </div>
 
     </div>
@@ -7100,6 +7190,17 @@ function createMatchElement(match) {
     const id = escapeHtml(match.$id);
     const eventCount = getEventsForMatch(match.$id).length;
 
+    /* Pemenang (skor, atau adu penalti kalau seri). Seri di babak grup = tanpa penanda */
+    const winnerId = isFinished ? getMatchWinnerId(match) : null;
+
+    const homeState = winnerId
+        ? (winnerId === match.home_club_id ? " win" : " lose")
+        : "";
+
+    const awayState = winnerId
+        ? (winnerId === match.away_club_id ? " win" : " lose")
+        : "";
+
     function logoHtml(url, name) {
         return url
             ? `<img src="${escapeHtml(url)}"
@@ -7147,7 +7248,7 @@ function createMatchElement(match) {
 
         <div class="teams">
 
-            <div class="team">
+            <div class="team${homeState}">
                 <div class="team-logo">${logoHtml(homeLogo, homeName)}</div>
                 <div class="team-name">${escapeHtml(homeName)}</div>
             </div>
@@ -7157,7 +7258,7 @@ function createMatchElement(match) {
                 <small>${escapeHtml(scoreCaption)}</small>
             </div>
 
-            <div class="team">
+            <div class="team${awayState}">
                 <div class="team-name">${escapeHtml(awayName)}</div>
                 <div class="team-logo">${logoHtml(awayLogo, awayName)}</div>
             </div>
@@ -8200,11 +8301,6 @@ function renderKnockout() {
     container.appendChild(finalRound);
     container.appendChild(championRound);
 }
-
-/* =========================================================
-   MATCH STATS
-========================================================= */
-
 function updateMatchStats() {
 
     const element = document.getElementById("stat-matches");
@@ -8212,9 +8308,28 @@ function updateMatchStats() {
     if (element) {
         element.textContent = matches.length;
     }
+
+    updateTournamentStatus();
 }
 
+function updateTournamentStatus() {
 
+    const element = document.getElementById("stat-status");
+
+    if (!element) return;
+
+    const finalMatch = getStageMatch("Final");
+
+    let text = "BELUM MULAI";
+
+    if (finalMatch && finalMatch.status === "finished") {
+        text = "SELESAI";
+    } else if (matches.some(match => match.status === "finished")) {
+        text = "BERLANGSUNG";
+    }
+
+    element.textContent = text;
+}
 /* =========================================================
    STANDINGS
 ========================================================= */
