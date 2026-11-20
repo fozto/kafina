@@ -3640,7 +3640,7 @@ tr.qualified td:first-child { box-shadow: inset 3px 0 0 var(--pitch-soft); }
     font-size: 17px;
     font-weight: 700;
     letter-spacing: .5px;
-    text-transform: uppercase;
+    text-transform: none;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -8366,7 +8366,7 @@ function buildTimelineHtml(match) {
             <div class="event-row ${side}">
                 <span class="event-minute">${escapeHtml(ev.minute)}'</span>
                 <span class="event-icon" title="${escapeHtml(info.label)}">${info.icon}</span>
-                <span class="event-text">${escapeHtml(ev.player_name)}${note}</span>
+                <span class="event-text">${escapeHtml(formatPlayerName(ev.player_name))}${note}</span>
             </div>
         `;
     }).join("");
@@ -8470,7 +8470,7 @@ function renderEventAdminList() {
         item.innerHTML = `
             <span>
                 ${escapeHtml(ev.minute)}' ${info.icon}
-                <strong>${escapeHtml(ev.player_name)}</strong>
+                <strong>${escapeHtml(formatPlayerName(ev.player_name))}</strong>
                 (${escapeHtml(clubName)})
             </span>
             <button type="button" class="btn-delete"
@@ -8496,7 +8496,7 @@ async function saveEvent(event) {
 
     const clubId = document.getElementById("event-club").value;
     const type = document.getElementById("event-type").value;
-    const player = document.getElementById("event-player").value.trim();
+    const player = formatPlayerName(document.getElementById("event-player").value);
     const minute = Number(document.getElementById("event-minute").value);
     const note = document.getElementById("event-note").value.trim();
 
@@ -8629,6 +8629,13 @@ async function deleteEvent(eventId) {
 ========================================================= */
 
 const TOP_SCORERS_LIMIT = 10;
+function formatPlayerName(name) {
+    return String(name ?? "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLowerCase()
+        .replace(/(^|[\s\-.])(\p{L})/gu, (m, sep, ch) => sep + ch.toUpperCase());
+}
 
 function calculateTopScorers() {
 
@@ -8644,7 +8651,7 @@ function calculateTopScorers() {
         /* Abaikan kejadian dari pertandingan yang sudah dihapus */
         if (!matchIds.has(ev.match_id)) return;
 
-        const name = String(ev.player_name || "").trim();
+        const name = formatPlayerName(ev.player_name);
 
         if (!name) return;
 
