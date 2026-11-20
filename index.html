@@ -5256,6 +5256,18 @@ puncak.
 <!-- ======================== REGULASI ======================== -->
 
 <div id="rules-panel-regulation" class="rules-panel">
+<article class="rule-article">
+    <div class="rule-number">07</div>
+    <div class="rule-body">
+        <h3>Kemenangan WO</h3>
+        <p>
+            Klub yang tidak hadir atau tidak dapat memulai pertandingan
+            pada waktu yang ditetapkan dinyatakan kalah WO. Klub lawan
+            menang dengan skor 3-0 dan mendapat 3 poin. Gol pada
+            pertandingan WO tidak dihitung untuk Top Skor.
+        </p>
+    </div>
+</article>
 
 <article class="rule-article">
     <div class="rule-number">01</div>
@@ -5632,7 +5644,18 @@ SIMPAN KLUB
                 </select>
             </div>
 
-            <div class="score-box">
+            <div class="form-group" id="wo-wrap">
+    <label>Kemenangan WO (lawan tidak hadir)</label>
+    <select id="match-wo" onchange="updateWoUI()">
+        <option value="">Tidak ada WO</option>
+        <option value="home" id="wo-opt-home">Kandang menang WO</option>
+        <option value="away" id="wo-opt-away">Tandang menang WO</option>
+    </select>
+    <div class="score-hint" style="margin-top:6px">
+        Jika dipilih, skor otomatis 3-0 untuk pemenang dan status menjadi Selesai.
+    </div>
+</div>
+            <div class="score-box" id="score-box">
                 <div class="score-box-label">SKOR (OTOMATIS DARI KEJADIAN)</div>
                 <div class="score-box-value" id="score-preview">- : -</div>
                 <div id="score-hint" class="score-hint"></div>
@@ -5766,6 +5789,7 @@ const TOURNAMENT_LOGO_URL =
     "https://res.cloudinary.com/dmecuyazc/image/upload/v1792785206/kafina_cup_altodz.png";
 const HOME_DAYS_AHEAD = 14;
 const KNOCKOUT_STAGES = ["Semifinal 1", "Semifinal 2", "Final"];
+const WO_SCORE = 3;
 
 function isKnockoutStage(stage) {
     return KNOCKOUT_STAGES.includes(stage);
@@ -7165,10 +7189,41 @@ function updateMatchFormStage() {
     document.getElementById("match-group-wrap").style.display =
         knockout ? "none" : "block";
 
-    document.getElementById("pen-row").style.display =
+        document.getElementById("pen-row").style.display =
         knockout ? "flex" : "none";
 
     populateMatchClubOptions();
+    updateWoUI();
+}
+/* Atur form saat opsi WO dipilih */
+function updateWoUI() {
+
+    const wo = document.getElementById("match-wo").value;
+    const knockout = isKnockoutStage(
+        document.getElementById("match-stage").value
+    );
+
+    const homeName =
+        getClubById(document.getElementById("home-club").value)?.name || "Kandang";
+    const awayName =
+        getClubById(document.getElementById("away-club").value)?.name || "Tandang";
+
+    document.getElementById("wo-opt-home").textContent = `${homeName} menang WO`;
+    document.getElementById("wo-opt-away").textContent = `${awayName} menang WO`;
+
+    const statusSelect = document.getElementById("match-status");
+
+    if (wo) {
+        statusSelect.value = "finished";
+        statusSelect.disabled = true;
+    } else {
+        statusSelect.disabled = false;
+    }
+
+    document.getElementById("score-box").style.display = wo ? "none" : "block";
+
+    document.getElementById("pen-row").style.display =
+        knockout && !wo ? "flex" : "none";
 }
 
 function populateMatchClubOptions() {
@@ -7250,6 +7305,12 @@ async function saveMatch(event) {
     let status = document.getElementById("match-status").value;
     const homePenValue = document.getElementById("home-pen").value;
     const awayPenValue = document.getElementById("away-pen").value;
+        const woChoice = document.getElementById("match-wo").value;
+    const woWinnerId = woChoice === "home" ? homeClubId
+                     : woChoice === "away" ? awayClubId
+                     : null;
+
+    if (woWinnerId) status = "finished";
 
     /* ---------- VALIDASI ---------- */
 
@@ -7273,7 +7334,7 @@ async function saveMatch(event) {
         return;
     }
     /* Pertandingan baru belum punya gol tercatat, jadi tidak boleh langsung "Selesai" */
-    if (status === "finished" && !editingMatchId) {
+    if (status === "finished" && !editingMatchId && !woWinnerId) {
         showToast(
             "Simpan dulu sebagai Terjadwal, catat gol lewat Gol & Kartu, lalu ubah ke Selesai lewat Edit."
         );
@@ -7347,15 +7408,21 @@ async function saveMatch(event) {
         })
         : { home: 0, away: 0, count: 0 };
 
-    let homeScore = null;
+        let homeScore = null;
     let awayScore = null;
 
-    if (status === "finished") {
+    if (woWinnerId) {
+
+        homeScore = woWinnerId === homeClubId ? WO_SCORE : 0;
+        awayScore = woWinnerId === awayClubId ? WO_SCORE : 0;
+
+    } else if (status === "finished") {
 
         if (
             eventScore.count === 0 &&
             existing &&
-            existing.home_score != null
+            existing.home_score != null &&
+            !existing.walkover_winner
         ) {
             /* Data lama yang skornya pernah diinput manual: dipertahankan */
             homeScore = existing.home_score;
@@ -7371,7 +7438,7 @@ async function saveMatch(event) {
     let homePen = null;
     let awayPen = null;
 
-    if (knockout && status === "finished" && homeScore === awayScore) {
+    if (knockout && !woWinnerId && status === "finished" && homeScore === awayScore) {
 
         if (homePenValue === "" || awayPenValue === "") {
             showToast(
@@ -7421,6 +7488,11 @@ async function saveMatch(event) {
         home_penalty_score: homePen,
         away_penalty_score: awayPen
     };
+    
+    /* Kolom walkover hanya dikirim bila dipakai (atau perlu dikosongkan) */
+    if (woWinnerId || existing?.walkover_winner) {
+        data.walkover_winner = woWinnerId || null;
+    }
 
     /* ---------- SIMPAN ---------- */
 
@@ -7849,6 +7921,9 @@ function createMatchElement(match) {
     ) {
         scoreCaption = `PEN ${match.home_penalty_score}-${match.away_penalty_score}`;
     }
+        if (isFinished && match.walkover_winner) {
+        scoreCaption = "WO";
+    }
 
     const stage = getMatchStage(match);
 
@@ -8036,6 +8111,14 @@ function editMatch(matchId) {
 
     document.getElementById("away-pen").value =
         match.away_penalty_score ?? "";
+
+    document.getElementById("match-wo").value =
+        match.walkover_winner
+            ? (match.walkover_winner === match.home_club_id ? "home" : "away")
+            : "";
+
+    updateWoUI();
+
     updateScoreMode(match);
 
     document.getElementById("match-modal").classList.add("show");
@@ -8182,6 +8265,7 @@ async function syncMatchScore(matchId) {
     const match = matches.find(item => item.$id === matchId);
 
     if (!match || match.status !== "finished") return;
+        if (match.walkover_winner) return;
 
     const result = getEventScore(match);
 
@@ -8230,6 +8314,11 @@ function updateScoreMode(match) {
         preview.textContent = "- : -";
         hint.textContent =
             "Setelah pertandingan dibuat, catat gol lewat tombol Gol & Kartu.";
+        return;
+    }
+        if (match.walkover_winner) {
+        preview.textContent = `${match.home_score} : ${match.away_score}`;
+        hint.textContent = "Kemenangan WO.";
         return;
     }
 
@@ -8423,6 +8512,10 @@ async function saveEvent(event) {
 
     /* Peringatan: skor manual akan diganti hitungan dari kejadian */
     const currentMatch = matches.find(item => item.$id === eventMatchId);
+        if (currentMatch?.walkover_winner && GOAL_TYPES.includes(type)) {
+        showToast("Pertandingan WO tidak bisa mencatat gol.");
+        return;
+    }
 
     if (
         GOAL_TYPES.includes(type) &&
@@ -9496,6 +9589,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (stageSelect) {
         stageSelect.addEventListener("change", updateMatchFormStage);
     }
+        ["home-club", "away-club"].forEach(id => {
+        document.getElementById(id)?.addEventListener("change", updateWoUI);
+    });
 
     initializeAppwrite();
     setTournamentLogo();
